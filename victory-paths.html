@@ -273,7 +273,7 @@
     }
 
     .path-card {
-      border: 1.5px solid var(--gray-200);
+      border: 2px solid var(--gray-200);
       border-radius: 14px;
       padding: 1.25rem;
       display: flex;
@@ -282,11 +282,8 @@
       transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
     }
     .path-card:hover {
-      border: 1.5px solid transparent;
-      background:
-        linear-gradient(#fff, #fff) padding-box,
-        linear-gradient(135deg, #1d4ed8 0%, #60a5fa 100%) border-box;
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.08), 0 2px 14px rgba(37,99,235,0.1);
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12), 0 2px 14px rgba(37,99,235,0.1);
     }
     .path-card.selected,
     .path-card.selected:hover {
@@ -2210,7 +2207,7 @@ function buildPathCards() {
         </div>
       </div>
       <div style="padding-top:.5rem">
-        <div class="eyebrow" style="margin-bottom:.5rem">Key milestones</div>
+        <div class="eyebrow" style="margin-bottom:.5rem;color:var(--gray-400)">Key milestones</div>
         <ol class="path-milestones">${path.bullets.map((b,i)=>'<li class="path-milestone"><span class="ms-dot">'+(i+1)+'</span><span class="ms-text">'+b+'</span></li>').join('')}</ol>
       </div>
       <button class="btn-choose">Choose this path</button>
