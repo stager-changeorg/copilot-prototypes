@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Co-Pilot Northstar Vision Workshop Board</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red: #E8173A;
+    --red-light: #FFF0F3;
+    --red-mid: #FFCCD5;
+    --blue: #1D4E8F;
+    --blue-light: #EEF4FB;
+    --blue-mid: #C5D9F0;
+    --green: #1A7A4A;
+    --green-light: #EAF7EE;
+    --orange: #D4640A;
+    --orange-light: #FEF3E8;
+    --purple: #6B3FA0;
+    --purple-light: #F3EEF9;
+    --gray-bg: #F4F4F5;
+    --gray-border: #DDDDE0;
+    --gray-text: #666;
+    --dark: #111;
+    --white: #fff;
+    --font: 'Segoe UI', Arial, sans-serif;
+  }
+  body {
+    font-family: var(--font);
+    background: #EAEAEC;
+    padding: 40px 24px 80px;
+    min-width: 1200px;
+  }
+
+  /* ── TITLE ─────────────────────────────────── */
+  .title-banner {
+    background: var(--red);
+    color: white;
+    border-radius: 16px;
+    padding: 36px 48px;
+    margin-bottom: 20px;
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;
+  }
+  .title-banner h1 { font-size: 30px; font-weight: 800; line-height: 1.2; }
+  .title-banner .sub { font-size: 14px; opacity: 0.85; margin-top: 8px; line-height: 1.5; }
+  .title-meta { text-align: right; }
+  .title-meta .badge { display: inline-block; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .title-meta p { font-size: 13px; opacity: 0.8; }
+
+  /* ── CENTRAL QUESTION ─────────────────────── */
+  .central-q {
+    background: white;
+    border: 2px solid var(--red);
+    border-left: 8px solid var(--red);
+    border-radius: 12px;
+    padding: 20px 28px;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .central-q .icon { font-size: 32px; }
+  .central-q .label { font-size: 10px; font-weight: 800; color: var(--red); letter-spacing: 0.08em; margin-bottom: 4px; }
+  .central-q .question { font-size: 18px; font-weight: 700; color: var(--dark); }
+
+  /* ── LEGEND ──────────────────────────────── */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; background: white; border-radius: 10px; padding: 12px 20px; border: 1px solid var(--gray-border); margin-bottom: 20px; font-size: 12px; align-items: center; }
+  .legend-title { font-weight: 700; color: var(--dark); margin-right: 4px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+  /* ── FLOW OVERVIEW ──────────────────────── */
+  .flow-row {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+    margin-bottom: 24px;
+  }
+  .flow-step {
+    background: white; border-radius: 10px; padding: 14px 16px;
+    border: 1px solid var(--gray-border);
+    border-top: 4px solid var(--red);
+    position: relative;
+  }
+  .flow-step.blue { border-top-color: var(--blue); }
+  .flow-step .num { font-size: 11px; font-weight: 800; color: var(--gray-text); letter-spacing: 0.06em; margin-bottom: 6px; }
+  .flow-step h3 { font-size: 12px; font-weight: 700; color: var(--dark); margin-bottom: 4px; line-height: 1.3; }
+  .flow-step p { font-size: 11px; color: var(--gray-text); line-height: 1.4; }
+  .flow-arrow { position: absolute; right: -8px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #aaa; z-index: 1; }
+
+  /* ── OUTPUTS ─────────────────────────────── */
+  .outputs-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 24px; }
+  .output-card { background: white; border-radius: 10px; padding: 14px; border: 1px solid var(--gray-border); border-top: 3px solid var(--red); }
+  .output-card.blue { border-top-color: var(--blue); }
+  .output-card .num { font-size: 20px; font-weight: 800; color: var(--red); margin-bottom: 4px; }
+  .output-card.blue .num { color: var(--blue); }
+  .output-card h3 { font-size: 11px; font-weight: 700; color: var(--dark); margin-bottom: 4px; line-height: 1.3; }
+  .output-card p { font-size: 10px; color: var(--gray-text); line-height: 1.4; }
+
+  /* ── SECTION LABEL ──────────────────────── */
+  .section-label { border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 800; letter-spacing: 0.06em; display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .section-label.morning { background: var(--red); color: white; }
+  .section-label.lunch { background: #888; color: white; }
+  .section-label.afternoon { background: var(--blue); color: white; }
+
+  /* ── ACTIVITY ROW ───────────────────────── */
+  .activity-row { display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: stretch; }
+  .time-col { background: white; border-radius: 8px; border: 1px solid var(--gray-border); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 6px; text-align: center; }
+  .time-col .t { font-size: 13px; font-weight: 800; color: var(--dark); }
+  .time-col .dur { font-size: 11px; color: var(--gray-text); }
+  .activity-card { border-radius: 10px; padding: 14px 18px; border: 1px solid transparent; display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: start; }
+  .activity-card.type-red { background: var(--red-light); border-color: var(--red-mid); border-left: 5px solid var(--red); }
+  .activity-card.type-blue { background: var(--blue-light); border-color: var(--blue-mid); border-left: 5px solid var(--blue); }
+  .activity-card.type-break { background: #f9f9f9; border-color: #e0e0e0; border-left: 5px solid #ccc; }
+  .card-main h3 { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+  .card-main .facilitator { font-size: 11px; color: var(--gray-text); margin-bottom: 8px; font-style: italic; }
+  .card-main .desc { font-size: 12px; color: #444; line-height: 1.6; }
+  .card-right { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; min-width: 130px; }
+  .tag { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+  .tag.all { background: #E8F4EA; color: #1A7A4A; }
+  .tag.partner { background: #FEF3E8; color: #D4640A; }
+  .tag.design { background: #F3EEF9; color: #6B3FA0; }
+  .tag.eng { background: #EEF4FB; color: #1D4E8F; }
+  .output-pill { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; background: white; border: 1px solid var(--gray-border); color: var(--dark); white-space: nowrap; }
+  .output-pill.key { background: var(--red); color: white; border-color: var(--red); }
+  .output-pill.key-blue { background: var(--blue); color: white; border-color: var(--blue); }
+
+  /* ── BOARD SECTIONS ─────────────────────── */
+  .board { display: flex; flex-direction: column; gap: 8px; }
+
+  /* ── HMW SPACE ──────────────────────────── */
+  .hmw-section { margin-top: 28px; }
+  .hmw-section h2 { font-size: 16px; font-weight: 800; color: var(--dark); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 3px solid var(--red); }
+  .hmw-clusters { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
+  .hmw-cluster { background: white; border-radius: 12px; padding: 16px; border: 1px solid var(--gray-border); }
+  .hmw-cluster h3 { font-size: 12px; font-weight: 800; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid; }
+  .hmw-cluster.c1 h3 { color: var(--red); border-color: var(--red-mid); }
+  .hmw-cluster.c2 h3 { color: var(--blue); border-color: var(--blue-mid); }
+  .hmw-cluster.c3 h3 { color: var(--green); border-color: #B8E0CA; }
+  .hmw-cluster.c4 h3 { color: var(--orange); border-color: #F5D5B0; }
+  .hmw-cluster.c5 h3 { color: var(--purple); border-color: #D8C5F0; }
+  .hmw-notes { display: flex; flex-direction: column; gap: 6px; }
+  .hmw-note { font-size: 11px; padding: 8px 10px; border-radius: 6px; line-height: 1.5; font-weight: 500; }
+  .hmw-note.red { background: #FFE4E9; color: #8B0020; }
+  .hmw-note.blue { background: #D0E4F5; color: #0D2B5E; }
+  .hmw-note.green { background: #D6EDDA; color: #0D4A2A; }
+  .hmw-note.orange { background: #FDEBD0; color: #7A3500; }
+  .hmw-note.purple { background: #EDE0F5; color: #3D1A6A; }
+  .hmw-note.blank { background: #f9f9f9; color: #aaa; border: 1px dashed #ddd; font-style: italic; }
+  .dot-vote { display: flex; gap: 3px; margin-top: 6px; flex-wrap: wrap; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--red); }
+  .dot.empty { background: transparent; border: 1.5px solid #ccc; }
+
+  /* ── CONCEPT CARDS ──────────────────────── */
+  .concepts-section { margin-top: 28px; }
+  .concepts-section h2 { font-size: 16px; font-weight: 800; color: var(--dark); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 3px solid var(--blue); }
+  .concepts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .concept-card { border-radius: 14px; border: 1px solid var(--gray-border); overflow: hidden; background: white; }
+  .concept-header { padding: 16px 18px 12px; border-bottom: 1px solid var(--gray-border); }
+  .concept-header .label { font-size: 10px; font-weight: 800; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .concept-header h3 { font-size: 16px; font-weight: 800; color: var(--dark); margin-bottom: 4px; }
+  .concept-header .tagline { font-size: 12px; color: var(--gray-text); font-style: italic; }
+  .concept-c1 .concept-header { background: var(--red-light); }
+  .concept-c1 .concept-header .label { color: var(--red); }
+  .concept-c2 .concept-header { background: var(--blue-light); }
+  .concept-c2 .concept-header .label { color: var(--blue); }
+  .concept-c3 .concept-header { background: #F3EEF9; }
+  .concept-c3 .concept-header .label { color: var(--purple); }
+  .concept-body { padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .concept-row { display: flex; gap: 10px; }
+  .concept-row .clabel { font-size: 10px; font-weight: 800; color: var(--gray-text); letter-spacing: 0.05em; min-width: 52px; padding-top: 1px; }
+  .concept-row .cval { font-size: 12px; color: var(--dark); line-height: 1.5; }
+  .concept-reactions { padding: 12px 18px; border-top: 1px solid var(--gray-border); background: #fafafa; }
+  .concept-reactions .rlabel { font-size: 10px; font-weight: 800; color: var(--gray-text); letter-spacing: 0.05em; margin-bottom: 8px; }
+  .reaction-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .reaction-box { padding: 8px; border-radius: 6px; font-size: 10px; line-height: 1.4; min-height: 36px; }
+  .reaction-box.love { background: #D6EDDA; color: #0D4A2A; }
+  .reaction-box.worried { background: #FFE4E9; color: #8B0020; }
+  .reaction-box.question { background: #FEF9C3; color: #7A5F00; }
+  .reaction-box .rlbl { font-weight: 800; display: block; margin-bottom: 3px; font-size: 9px; letter-spacing: 0.04em; }
+
+  /* ── TESTING STRATEGY ───────────────────── */
+  .testing-section { margin-top: 28px; }
+  .testing-section h2 { font-size: 16px; font-weight: 800; color: var(--dark); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 3px solid var(--orange); }
+  .testing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .testing-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--gray-border); }
+  .testing-card h3 { font-size: 14px; font-weight: 800; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid; }
+  .testing-card.qual h3 { color: var(--green); border-color: #B8E0CA; }
+  .testing-card.ab h3 { color: var(--blue); border-color: var(--blue-mid); }
+  .testing-row { display: flex; flex-direction: column; gap: 8px; }
+  .test-item { padding: 10px 12px; border-radius: 8px; font-size: 11px; line-height: 1.5; }
+  .test-item.qual-item { background: var(--green-light); color: #0D4A2A; }
+  .test-item.ab-item { background: var(--blue-light); color: #0D2B5E; }
+  .test-item strong { display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.04em; margin-bottom: 3px; }
+  .test-item.blank { background: #f9f9f9; color: #bbb; border: 1px dashed #ddd; font-style: italic; }
+
+  /* ── PERSONA REF ────────────────────────── */
+  .personas-section { margin-top: 28px; }
+  .personas-section h2 { font-size: 16px; font-weight: 800; color: var(--dark); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 3px solid var(--green); }
+  .persona-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .persona-card { border-radius: 12px; padding: 20px; border: 1px solid var(--gray-border); }
+  .persona-card.local { background: #FFFBF0; border-top: 5px solid #F5A623; }
+  .persona-card.political { background: #F0F4FF; border-top: 5px solid var(--blue); }
+  .persona-card .emoji { font-size: 26px; margin-bottom: 8px; }
+  .persona-card h3 { font-size: 14px; font-weight: 800; color: var(--dark); margin-bottom: 2px; }
+  .persona-card .tagline { font-size: 12px; color: var(--gray-text); font-style: italic; margin-bottom: 12px; }
+  .persona-facts { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pfact { font-size: 11px; background: white; border-radius: 6px; padding: 5px 9px; border: 1px solid #e0e0e0; }
+  .pfact strong { display: block; font-size: 9px; color: var(--gray-text); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .persona-q { margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 12px; font-style: italic; line-height: 1.5; font-weight: 500; }
+  .persona-q.local-q { background: #FFF3DC; color: #7A4A00; }
+  .persona-q.political-q { background: #E8EEF8; color: #0D2B5E; }
+
+  /* ── PRESSURE TEST ──────────────────────── */
+  .pressure-section { margin-top: 28px; }
+  .pressure-section h2 { font-size: 16px; font-weight: 800; color: var(--dark); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 3px solid var(--purple); }
+  .pressure-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .pressure-card { background: white; border-radius: 12px; border: 1px solid var(--gray-border); overflow: hidden; }
+  .pressure-header { padding: 10px 14px; font-size: 12px; font-weight: 800; }
+  .pressure-c1 .pressure-header { background: var(--red-light); color: var(--red); }
+  .pressure-c2 .pressure-header { background: var(--blue-light); color: var(--blue); }
+  .pressure-c3 .pressure-header { background: #F3EEF9; color: var(--purple); }
+  .pressure-body { padding: 12px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pressure-cell { padding: 8px 10px; border-radius: 6px; font-size: 11px; line-height: 1.4; }
+  .pressure-cell .plabel { font-weight: 800; font-size: 9px; letter-spacing: 0.04em; display: block; margin-bottom: 3px; }
+  .pressure-cell.lh { background: #FFFBF0; color: #7A4A00; }
+  .pressure-cell.lh .plabel { color: #F5A623; }
+  .pressure-cell.pca { background: #EEF4FB; color: #0D2B5E; }
+  .pressure-cell.pca .plabel { color: var(--blue); }
+
+  .footer-note { margin-top: 32px; text-align: center; font-size: 11px; color: #999; padding: 16px; border-top: 1px solid var(--gray-border); }
+</style>
+</head>
+<body>
+
+<!-- ── TITLE ──────────────────────────────────────────────────────────────── -->
+<div class="title-banner">
+  <div>
+    <h1>Co-Pilot Northstar Vision Workshop</h1>
+    <div class="sub">HMW ideation → co-pilot concepts → qual test plan → A/B test roadmap<br>Hypotheses come from the designs, not the other way around</div>
+  </div>
+  <div class="title-meta">
+    <div class="badge">WORKSHOP BOARD</div>
+    <p>Starter Experience Squad · Q2 2026</p>
+    <p>Local Hero &nbsp;·&nbsp; Political Change Agent</p>
+  </div>
+</div>
+
+<!-- ── CENTRAL QUESTION ───────────────────────────────────────────────────── -->
+<div class="central-q">
+  <div class="icon">🧭</div>
+  <div>
+    <div class="label">THE CENTRAL QUESTION — Everything today flows from this</div>
+    <div class="question">How might we make an AI-first starter dashboard that acts as a true co-pilot?</div>
+  </div>
+</div>
+
+<!-- ── WORKSHOP FLOW ───────────────────────────────────────────────────────── -->
+<div class="flow-row">
+  <div class="flow-step">
+    <div class="num">MORNING · STEP 1</div>
+    <h3>Ground in the Personas</h3>
+    <p>Who are we building for? What do Local Hero and Political Change Agent most need from a co-pilot?</p>
+    <div class="flow-arrow">›</div>
+  </div>
+  <div class="flow-step">
+    <div class="num">MORNING · STEP 2</div>
+    <h3>HMW Generation</h3>
+    <p>Generate and prioritize How Might We questions. These become the anchors for the afternoon's concept work.</p>
+    <div class="flow-arrow">›</div>
+  </div>
+  <div class="flow-step blue">
+    <div class="num">AFTERNOON · STEP 3</div>
+    <h3>Concept Development</h3>
+    <p>3 small groups, 3 distinct co-pilot concepts. Each answers a different cluster of HMW questions.</p>
+    <div class="flow-arrow">›</div>
+  </div>
+  <div class="flow-step blue">
+    <div class="num">AFTERNOON · STEP 4</div>
+    <h3>Select for Qual Testing</h3>
+    <p>Narrow to 2–3 concepts that are genuinely distinct. What do we most need to learn from users?</p>
+    <div class="flow-arrow">›</div>
+  </div>
+  <div class="flow-step blue">
+    <div class="num">AFTERNOON · STEP 5</div>
+    <h3>Build the Test Plan</h3>
+    <p>For each concept: qual test design first, then the A/B test roadmap for when we narrow in.</p>
+  </div>
+</div>
+
+<!-- ── OUTPUTS ─────────────────────────────────────────────────────────────── -->
+<div class="outputs-row">
+  <div class="output-card">
+    <div class="num">01</div>
+    <h3>Prioritized HMW Set</h3>
+    <p>The questions anchoring every concept we build. Organized by cluster, voted on by the group.</p>
+  </div>
+  <div class="output-card">
+    <div class="num">02</div>
+    <h3>2–3 Co-Pilot Concepts</h3>
+    <p>Distinct, named, sketched. Each takes a real position on what the co-pilot should do and feel like.</p>
+  </div>
+  <div class="output-card blue">
+    <div class="num">03</div>
+    <h3>Qual Test Plan</h3>
+    <p>Per concept: what we're testing, who we're talking to, and what we're listening for.</p>
+  </div>
+  <div class="output-card blue">
+    <div class="num">04</div>
+    <h3>A/B Test Roadmap</h3>
+    <p>The design decisions that become quantitative tests after qual narrows our direction.</p>
+  </div>
+  <div class="output-card blue">
+    <div class="num">05</div>
+    <h3>Persona Map</h3>
+    <p>Each concept mapped to Local Hero + Political Change Agent. Gaps flagged before we build.</p>
+  </div>
+</div>
+
+<!-- ── LEGEND ──────────────────────────────────────────────────────────────── -->
+<div class="legend">
+  <span class="legend-title">KEY</span>
+  <div class="legend-item"><div class="legend-dot" style="background:#E8173A"></div> Generative / Ideation Activity</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1D4E8F"></div> Decision / Alignment Activity</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ccc"></div> Break</div>
+  <div class="legend-item" style="margin-left:8px"><span class="tag partner">🤝 Partner needed</span></div>
+  <div class="legend-item"><span class="tag all">👥 Full team</span></div>
+  <div class="legend-item"><span class="tag design">🎨 Design-led</span></div>
+</div>
+
+<!-- ── AGENDA BOARD ────────────────────────────────────────────────────────── -->
+<div class="board">
+
+  <div class="section-label morning">☀️ MORNING  ·  Ground, Frame & Generate  ·  9:00 – 12:00</div>
+
+  <div class="activity-row">
+    <div class="time-col"><div class="t">9:00</div><div class="dur">15 min</div></div>
+    <div class="activity-card type-red">
+      <div class="card-main">
+        <h3>Welcome, Ground Rules & Goals for the Day</h3>
+        <div class="facilitator">Samara</div>
+        <div class="desc">Set the tone. Review the 5 outputs. Establish ground rules. Frame the central question. Energy check-in: one word for how you're feeling about what we're building.</div>
+      </div>
+      <div class="card-right"><span class="tag all">👥 All</span></div>
+    </div>
+  </div>
+
+  <div class="activity-row">
+    <div class="time-col"><div class="t">9:15</div><div class="dur">15 min</div></div>
+    <div class="activity-card type-red">
+      <div class="card-main">
+        <h3>Energizer: "The Moment That Made You Want to Fix This"</h3>
+        <div class="facilitator">Lizzie</div>
+        <div class="desc">Each person shares one moment — from research, data, or a real user — that made them think: <em>we have to solve this.</em> 60 seconds each. Grounds the room in why before we get into how.</div>
+      </div>
+      <div class="card-right"><span class="tag all">👥 All</span></div>
+    </div>
+  </div>
+
+  <div class="activity-row">
+    <div class="time-col"><div class="t">9:30</div><div class="dur">30 min</div></div>
+    <div class="activity-card type-blue">
+      <div class="card-main">
+        <h3>Set the Stage: Where We Are & Where We're Going</h3>
+        <div class="facilitator">Jen</div>
+        <div class="desc"><strong>5 min:</strong> Q1 numbers — retention at 40%, beta live. <strong>10 min:</strong> What makes a co-pilot genuinely different from a checklist. <strong>10 min:</strong> What Q2 is here to figure out — we're designing to learn, not to ship. <strong>5 min:</strong> The test-driven mindset for today.</div>
+      </div>
+      <div class="card-right">
+        <span class="tag all">👥 All</span>
+        <span class="output-pill">📌 Shared context</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="activity-row">
+    <div class="time-col"><div class="t">10:00</div><div class="dur">45 min</div></div>
+    <div class="activity-card type-blue">
+      <div class="card-main">
+        <h3>🏡 🗳️ Persona Immersion: Local Hero & Political Change Agent</h3>
+        <div class="facilitator">Samara + Research Partner</div>
+        <div class="desc">Two deep dives, 20 min each + 5 min debrief. For each: 2-min video clip → persona snapshot → small group prompt: <em>"This starter just opened their dashboard after 5 days away. What is the one thing the co-pilot could do that would make them feel like it truly knows their campaign?"</em> Debrief: what surprised us about the differences between these two personas?</div>
+      </div>
+      <div class="card-right">
+        <span class="tag all">👥 All</span>
+        <span class="tag partner">🤝 Research</span>
+        <span class="output-pill">📌 Empathy anchor</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="activity-row">
+    <div class="time-col"><div class="t">10:45</div><div class="dur">15 min</div></div>
+    <div class="activity-card type-break">
+      <div class="card-main"><h3>☕ Break</h3></div>
+    </div>
+  </div>
+
+  <div class="activity-row">
+    <div class="time-col"><div class="t">11:00</div><div class="dur">60 min</div></div>
+    <div class="activity-card type-red">
+      <div class="card-main">
+        <h3>💡 HMW Generation & Prioritization</h3>
+        <div class="facilitator">Lizzie</div>
+        <div class="desc">
+          <strong>Part 1 — Individual (15 min):</strong> Write every HMW you can, anchored to what we heard in the persona immersion. Push for specificity — no generic product questions. &nbsp;·&nbsp;
+          <strong>Part 2 — Share + Cluster (20 min):</strong> Post and cluster across 5 categories: Timing &amp; Moments / Knowledge &amp; Context / Action &amp; Execution / Tone &amp; Voice / Structure &amp; Surface. &nbsp;·&nbsp;
+          <strong>Part 3 — Dot Vote (15 min):</strong> 5 dots per person. Top questions per cluster become concept anchors. &nbsp;·&nbsp;
+          <strong>Part 4 — Frame Check (10 min):</strong> Do our top HMWs cover both personas? Adjust if not.
+        </div>
+      </div>
+      <div class="card-right">
+        <span class="tag all">👥 All</span>
+        <span class="output-pill key">⭐ OUTPUT: HMW Set</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label lunch">🍽 LUNCH  ·  12:00 – 1:00</div>
+
+  <div class="section-label afternoon">🌆 AFTERNOON  ·  Build Concepts & Define the Test Plan  ·  1:00 – 5:00</div>
+
+  <div class="activity-row">
+    <div class="time-col"><div class="t">1:00</div><div class="dur">60 min</div></div>
+    <div class="activity-card type-red">
+      <div class="card-main">
+        <h3>🎨 Co-Pilot Concept Development</h3>
+        <div class="facilitator">Lizzie + Samara</div>
+        <div class="desc">Three small groups. Each takes a different HMW cluster and develops a distinct co-pilot concept using the sketch template: What does it know? / What does it show? / What does it do? / How does it feel? / Moment right after creation? / Return visit 2 weeks in? / What makes this concept different? Groups should take a real position — mild agreement across all three is worse than two bold, in-tension concepts. 5-min share-out per group at the end.</div>
+      </div>
+      <div class="card-right">
+        <span class="tag all">👥 All</span>
+        <span class="tag design">🎨 Design-led</span>
+        <span class="output-pill key">⭐ OUTPUT: 2–3 Concepts</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="activity-row">
+    <div class="time-col"><div class="t">2:00</div><div class="dur">30 min</div></div>
+    <div class="activity-card type-blue">
+      <div class="card-main">
+        <h3>🖼 Concept Gallery Walk + Reactions</h3>
+        <div class="facilitator">Samara</div>
+        <div class="desc">Three concepts posted around the room / FigJam. Everyone rotates and leaves <em>written</em> reactions on three prompts: 💚 What excites me / 🔴 What worries me / ❓ The question I most want to answer before we build this. No verbal discussion — written only. Campaign expert and engineering lead especially valuable here.</div>
+      </div>
+      <div class="card-right">
+        <span class="tag all">👥 All</span>
+        <span class="tag partner">🤝 Campaign Expert</span>
+        <span class="tag eng">🔧 Eng Lead</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="activity-row">
+    <div class="time-col"><div class="t">2:30</div><div class="dur">15 min</div></div>
+    <div class="activity-card type-break">
+      <div class="card-main"><h3>☕ Break</h3></div>
+    </div>
+  </div>
+
+  <div class="activity-row">
+    <div class="time-col"><div class="t">2:45</div><div class="dur">45 min</div></div>
+    <div class="activity-card type-red">
+      <div class="card-main">
+        <h3>🔍 Concept Refinement & Selection for Qual Testing</h3>
+        <div class="facilitator">Lizzie + Jen</div>
+        <div class="desc">Read the reactions aloud. Discuss: Are any two concepts too similar to test separately? Is any concept clearly not ready? What would make each stronger before we take it to users? Goal: 2–3 genuinely distinct concepts — each with a different hypothesis about what makes the co-pilot work. For each selected concept: what is the single most important learning question?</div>
+      </div>
+      <div class="card-right">
+        <span class="tag all">👥 All</span>
+        <span class="output-pill">📌 Concepts narrowed</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="activity-row">
+    <div class="time-col"><div class="t">3:30</div><div class="dur">45 min</div></div>
+    <div class="activity-card type-blue">
+      <div class="card-main">
+        <h3>🧪 Testing Strategy: Qual First, Then A/B</h3>
+        <div class="facilitator">Samara + Research Partner</div>
+        <div class="desc">
+          <strong>Part 1 — Qual plan per concept (20 min):</strong> What assumptions must be true? Which can only be answered by talking to users? Design the test: who to recruit, what to show, what to listen for. &nbsp;·&nbsp;
+          <strong>Part 2 — A/B test roadmap (20 min):</strong> Once qual narrows our direction, what specific design decisions become quantitative tests? For each: hypothesis / variant vs. control / primary metric. &nbsp;·&nbsp;
+          <strong>Part 3 — Sequence (5 min):</strong> What qual test goes first, and when?
+        </div>
+      </div>
+      <div class="card-right">
+        <span class="tag all">👥 All</span>
+        <span class="tag partner">🤝 Research + Data</span>
+        <span class="output-pill key-blue">⭐ OUTPUT: Test Plan</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="activity-row">
+    <div class="time-col"><div class="t">4:15</div><div class="dur">20 min</div></div>
+    <div class="activity-card type-red">
+      <div class="card-main">
+        <h3>🏡 🗳️ Persona Pressure Test</h3>
+        <div class="facilitator">Samara</div>
+        <div class="desc">For each selected concept: "Does this have a clear, specific line of sight to Local Hero needs?" and "Does this work for a Political Change Agent?" Use the persona cards. Raise a flag for any concept that only maps to one persona or where the connection is vague. This is a safety net — not a debate.</div>
+      </div>
+      <div class="card-right">
+        <span class="tag all">👥 All</span>
+        <span class="output-pill key">⭐ OUTPUT: Persona Map</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="activity-row">
+    <div class="time-col"><div class="t">4:35</div><div class="dur">15 min</div></div>
+    <div class="activity-card type-blue">
+      <div class="card-main">
+        <h3>✅ Synthesis + Decisions</h3>
+        <div class="facilitator">Jen</div>
+        <div class="desc">Walk the decisions list. Confirm: selected concepts, qual plan, A/B roadmap, owners, dates. Parking lot for anything unresolved. Everyone should be able to describe the 2–3 concepts and the first thing we're going to learn from qual.</div>
+      </div>
+      <div class="card-right"><span class="tag all">👥 All</span></div>
+    </div>
+  </div>
+
+  <div class="activity-row">
+    <div class="time-col"><div class="t">4:50</div><div class="dur">10 min</div></div>
+    <div class="activity-card type-red">
+      <div class="card-main">
+        <h3>🎉 Next Steps & Close</h3>
+        <div class="facilitator">Samara</div>
+        <div class="desc">Read the top HMWs and concept names. Confirm qual prep owners. Check-out: one word for how you feel vs. 9am. Optional: 15 min free sketch time.</div>
+      </div>
+      <div class="card-right"><span class="tag all">👥 All</span></div>
+    </div>
+  </div>
+
+</div><!-- /board -->
+
+
+<!-- ── HMW GENERATION SPACE ───────────────────────────────────────────────── -->
+<div class="hmw-section">
+  <h2>💡 HMW Generation Board (Activity 3 — 11:00–12:00)</h2>
+  <div class="hmw-clusters">
+
+    <div class="hmw-cluster c1">
+      <h3>⏱ Timing &amp; Moments</h3>
+      <div class="hmw-notes">
+        <div class="hmw-note red">HMW surface guidance at the exact moment a starter needs it most — not just on login?
+          <div class="dot-vote"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot empty"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note red">HMW make every return visit feel different from the last — because something has actually changed?
+          <div class="dot-vote"><div class="dot"></div><div class="dot"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note red">HMW give a starter the right next move within seconds of opening the dashboard?
+          <div class="dot-vote"><div class="dot"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note blank">[ add yours → ]</div>
+      </div>
+    </div>
+
+    <div class="hmw-cluster c2">
+      <h3>🧠 Knowledge &amp; Context</h3>
+      <div class="hmw-notes">
+        <div class="hmw-note blue">HMW make the co-pilot feel like it has been watching the campaign — even when the starter hasn't?
+          <div class="dot-vote"><div class="dot" style="background:var(--blue)"></div><div class="dot" style="background:var(--blue)"></div><div class="dot" style="background:var(--blue)"></div><div class="dot" style="background:var(--blue)"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note blue">HMW surface what campaigns like this one have done — without it feeling generic?
+          <div class="dot-vote"><div class="dot" style="background:var(--blue)"></div><div class="dot" style="background:var(--blue)"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note blue">HMW help a Political Change Agent identify the most credible path to their decision maker right now?
+          <div class="dot-vote"><div class="dot" style="background:var(--blue)"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note blank">[ add yours → ]</div>
+      </div>
+    </div>
+
+    <div class="hmw-cluster c3">
+      <h3>⚡ Action &amp; Execution</h3>
+      <div class="hmw-notes">
+        <div class="hmw-note green">HMW remove the blank page entirely — so taking the next step feels effortless?
+          <div class="dot-vote"><div class="dot" style="background:var(--green)"></div><div class="dot" style="background:var(--green)"></div><div class="dot" style="background:var(--green)"></div><div class="dot empty"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note green">HMW surface one high-confidence move that feels specific to this campaign, not like generic advice?
+          <div class="dot-vote"><div class="dot" style="background:var(--green)"></div><div class="dot" style="background:var(--green)"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note green">HMW give a Local Hero the confidence of a seasoned campaigner at exactly the right moment?
+          <div class="dot-vote"><div class="dot" style="background:var(--green)"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note blank">[ add yours → ]</div>
+      </div>
+    </div>
+
+    <div class="hmw-cluster c4">
+      <h3>🎙 Tone &amp; Voice</h3>
+      <div class="hmw-notes">
+        <div class="hmw-note orange">HMW make guidance feel like forward momentum rather than a checklist?
+          <div class="dot-vote"><div class="dot" style="background:var(--orange)"></div><div class="dot" style="background:var(--orange)"></div><div class="dot" style="background:var(--orange)"></div><div class="dot empty"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note orange">HMW make the co-pilot sound like it could have been written by the starter themselves?
+          <div class="dot-vote"><div class="dot" style="background:var(--orange)"></div><div class="dot" style="background:var(--orange)"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note orange">HMW communicate urgency without pressure, and confidence without arrogance?
+          <div class="dot-vote"><div class="dot" style="background:var(--orange)"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note blank">[ add yours → ]</div>
+      </div>
+    </div>
+
+    <div class="hmw-cluster c5">
+      <h3>📐 Structure &amp; Surface</h3>
+      <div class="hmw-notes">
+        <div class="hmw-note purple">HMW organize guidance so it feels like a journey, not an inbox?
+          <div class="dot-vote"><div class="dot" style="background:var(--purple)"></div><div class="dot" style="background:var(--purple)"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note purple">HMW show the starter what's happening on their campaign and connect it directly to what to do next?
+          <div class="dot-vote"><div class="dot" style="background:var(--purple)"></div><div class="dot" style="background:var(--purple)"></div><div class="dot" style="background:var(--purple)"></div><div class="dot empty"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note purple">HMW decide how much to surface at once — without overwhelming a starter who just wants to know what to do?
+          <div class="dot-vote"><div class="dot" style="background:var(--purple)"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div><div class="dot empty"></div></div>
+        </div>
+        <div class="hmw-note blank">[ add yours → ]</div>
+      </div>
+    </div>
+
+  </div>
+  <!-- Instruction -->
+  <div style="background:var(--red-light);border-radius:8px;padding:12px 18px;font-size:12px;color:#8B0020;border-left:4px solid var(--red);">
+    <strong>5 dots per person.</strong> Vote for the HMWs that most excite you AND most challenge you. Top questions per cluster anchor the afternoon concepts. We want spread across clusters so each concept responds to a different challenge.
+  </div>
+</div>
+
+
+<!-- ── CONCEPT DEVELOPMENT SPACE ─────────────────────────────────────────── -->
+<div class="concepts-section">
+  <h2>🎨 Co-Pilot Concept Development Space (Activity 4 — 1:00–2:30)</h2>
+  <div style="font-size:12px;color:var(--gray-text);margin-bottom:16px;">Each group uses their assigned HMW cluster to build a distinct concept. Fill in the template below. 5-min share-out at the end. <strong>Take a real position — mild agreement across all three concepts is less useful than two bold, in-tension ones.</strong></div>
+
+  <div class="concepts-grid">
+
+    <!-- Concept 1 -->
+    <div class="concept-card concept-c1">
+      <div class="concept-header">
+        <div class="label">CONCEPT A · HMW CLUSTER: Timing &amp; Action</div>
+        <h3>The Coach</h3>
+        <div class="tagline">One move at a time. Remove the blank page. Never overwhelm.</div>
+      </div>
+      <div class="concept-body">
+        <div class="concept-row"><span class="clabel">KNOWS</span><span class="cval">Where the starter is in the journey; what they did last; what they haven't done yet</span></div>
+        <div class="concept-row"><span class="clabel">SHOWS</span><span class="cval">A single highest-confidence next step with a clear why. Nothing else until they act.</span></div>
+        <div class="concept-row"><span class="clabel">DOES</span><span class="cval">Drafts the action for them. Links directly. Tracks completion. Offers the next step when done.</span></div>
+        <div class="concept-row"><span class="clabel">FEELS</span><span class="cval">Focused, calm, achievable. A coach who knows when to push and when to reassure.</span></div>
+        <div class="concept-row"><span class="clabel">ON CREATE</span><span class="cval">Three things. That's it. Most important first.</span></div>
+        <div class="concept-row"><span class="clabel">RETURN</span><span class="cval">Picks up exactly where you left off. Acknowledges what's happened.</span></div>
+      </div>
+      <div class="concept-reactions">
+        <div class="rlabel">REACTIONS FROM THE GALLERY WALK</div>
+        <div class="reaction-row">
+          <div class="reaction-box love"><span class="rlbl">💚 LOVE</span> Clear, reduces anxiety, respects starter's time</div>
+          <div class="reaction-box worried"><span class="rlbl">🔴 WORRIED</span> Does it feel too narrow? Does hiding the journey cause distrust?</div>
+          <div class="reaction-box question"><span class="rlbl">❓ QUESTION</span> How does it handle a starter who wants to see what's coming?</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Concept 2 -->
+    <div class="concept-card concept-c2">
+      <div class="concept-header">
+        <div class="label">CONCEPT B · HMW CLUSTER: Knowledge &amp; Structure</div>
+        <h3>The Campaign Mirror</h3>
+        <div class="tagline">Show the starter what's happening. Then tell them what it means.</div>
+      </div>
+      <div class="concept-body">
+        <div class="concept-row"><span class="clabel">KNOWS</span><span class="cval">Signature velocity, traffic source, supporter comments, DM status — and what it all means</span></div>
+        <div class="concept-row"><span class="cval" style="grid-column:1/-1;font-size:12px;color:#aaa;font-style:italic;">← Your group fills this in →</span></div>
+        <div class="concept-row"><span class="clabel">SHOWS</span><span class="cval">[ What does it surface first? ]</span></div>
+        <div class="concept-row"><span class="clabel">DOES</span><span class="cval">[ What actions does it enable? ]</span></div>
+        <div class="concept-row"><span class="clabel">FEELS</span><span class="cval">[ How does this concept feel emotionally? ]</span></div>
+        <div class="concept-row"><span class="clabel">ON CREATE</span><span class="cval">[ What is the first thing it does? ]</span></div>
+        <div class="concept-row"><span class="clabel">RETURN</span><span class="cval">[ What's different two weeks in? ]</span></div>
+      </div>
+      <div class="concept-reactions">
+        <div class="rlabel">REACTIONS FROM THE GALLERY WALK</div>
+        <div class="reaction-row">
+          <div class="reaction-box love"><span class="rlbl">💚 LOVE</span> [ Fill in during gallery walk ]</div>
+          <div class="reaction-box worried"><span class="rlbl">🔴 WORRIED</span> [ Fill in during gallery walk ]</div>
+          <div class="reaction-box question"><span class="rlbl">❓ QUESTION</span> [ Fill in during gallery walk ]</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Concept 3 -->
+    <div class="concept-card concept-c3">
+      <div class="concept-header">
+        <div class="label">CONCEPT C · HMW CLUSTER: Tone &amp; Voice</div>
+        <h3>The Veteran</h3>
+        <div class="tagline">Other campaigns like yours have done this. Here's what worked.</div>
+      </div>
+      <div class="concept-body">
+        <div class="concept-row"><span class="clabel">KNOWS</span><span class="cval">What campaigns like this one have done at this stage — and what moved the needle</span></div>
+        <div class="concept-row"><span class="cval" style="grid-column:1/-1;font-size:12px;color:#aaa;font-style:italic;">← Your group fills this in →</span></div>
+        <div class="concept-row"><span class="clabel">SHOWS</span><span class="cval">[ What does it surface first? ]</span></div>
+        <div class="concept-row"><span class="clabel">DOES</span><span class="cval">[ What actions does it enable? ]</span></div>
+        <div class="concept-row"><span class="clabel">FEELS</span><span class="cval">[ How does this concept feel emotionally? ]</span></div>
+        <div class="concept-row"><span class="clabel">ON CREATE</span><span class="cval">[ What is the first thing it does? ]</span></div>
+        <div class="concept-row"><span class="clabel">RETURN</span><span class="cval">[ What's different two weeks in? ]</span></div>
+      </div>
+      <div class="concept-reactions">
+        <div class="rlabel">REACTIONS FROM THE GALLERY WALK</div>
+        <div class="reaction-row">
+          <div class="reaction-box love"><span class="rlbl">💚 LOVE</span> [ Fill in during gallery walk ]</div>
+          <div class="reaction-box worried"><span class="rlbl">🔴 WORRIED</span> [ Fill in during gallery walk ]</div>
+          <div class="reaction-box question"><span class="rlbl">❓ QUESTION</span> [ Fill in during gallery walk ]</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ── TESTING STRATEGY ────────────────────────────────────────────────────── -->
+<div class="testing-section">
+  <h2>🧪 Testing Strategy Board (Activity 6 — 3:30–4:15)</h2>
+  <div style="font-size:12px;color:var(--gray-text);margin-bottom:16px;"><strong>Hypotheses come from the concepts — not the other way around.</strong> For each selected concept: qual first to answer what only users can tell us, then A/B tests for the design decisions that become quantitative once we've narrowed.</div>
+
+  <div class="testing-grid">
+
+    <div class="testing-card qual">
+      <h3>🟢 Qual Test Plan — What we learn from users first</h3>
+      <div class="testing-row">
+        <div class="test-item qual-item">
+          <strong>PER CONCEPT — KEY ASSUMPTION</strong>
+          What must be true for this concept to work? (Example: "The co-pilot must feel like it knows the campaign, not just the category.")
+        </div>
+        <div class="test-item qual-item">
+          <strong>WHAT WE SHOW USERS</strong>
+          Prototype / story / concept sketch? What fidelity is right for what we're trying to learn?
+        </div>
+        <div class="test-item qual-item">
+          <strong>WHAT WE'RE LISTENING FOR</strong>
+          Not "do they like it?" — but: Does it feel campaign-specific? Does it give them more confidence? Does the moment it appears feel right? Does it feel like something they'd come back to?
+        </div>
+        <div class="test-item qual-item">
+          <strong>WHO WE RECRUIT</strong>
+          Local Hero / Political Change Agent / both? New starters or early-journey? How many sessions per concept?
+        </div>
+        <div class="test-item blank">[ Concept A qual plan — fill in → ]</div>
+        <div class="test-item blank">[ Concept B qual plan — fill in → ]</div>
+        <div class="test-item blank">[ Concept C qual plan — fill in → ]</div>
+      </div>
+    </div>
+
+    <div class="testing-card ab">
+      <h3>🔵 A/B Test Roadmap — What we test quantitatively after qual</h3>
+      <div class="testing-row">
+        <div class="test-item ab-item">
+          <strong>STRUCTURAL DECISIONS (good A/B candidates)</strong>
+          Inline vs. dedicated surface · Phase-based vs. flat · 1 action vs. 3 actions shown · Guidance above or below the fold
+        </div>
+        <div class="test-item ab-item">
+          <strong>TIMING DECISIONS</strong>
+          What triggers guidance to surface · Prominence on return visit · When co-pilot speaks vs. stays quiet
+        </div>
+        <div class="test-item ab-item">
+          <strong>CONTENT DECISIONS</strong>
+          Momentum signal framing · How much context the co-pilot shows · Specificity of recommended actions · Whether it references similar campaigns
+        </div>
+        <div class="test-item ab-item">
+          <strong>A/B TEST TEMPLATE</strong>
+          If we [specific change], then [metric] will increase by [X%] because [reason]. Test: [Variant] vs. [Control]. Primary metric: Week 2 retention / guidance engagement / downstream action. Secondary: return visits / task completion.
+        </div>
+        <div class="test-item blank">[ A/B test candidate 1 — fill in → ]</div>
+        <div class="test-item blank">[ A/B test candidate 2 — fill in → ]</div>
+        <div class="test-item blank">[ A/B test candidate 3 — fill in → ]</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ── PERSONAS ────────────────────────────────────────────────────────────── -->
+<div class="personas-section">
+  <h2>🧭 Persona Reference: Who We're Designing For</h2>
+  <div class="persona-grid">
+    <div class="persona-card local">
+      <div class="emoji">🏡</div>
+      <h3>Local Hero</h3>
+      <div class="tagline">Advocates for their community</div>
+      <div class="persona-facts">
+        <div class="pfact"><strong>Driver</strong>Community connection</div>
+        <div class="pfact"><strong>Win looks like</strong>Road fixed. Someone responds.</div>
+        <div class="pfact"><strong>Key barrier</strong>Feels alone; unaware of power structures</div>
+        <div class="pfact"><strong>Behavior</strong>Uses "we" · Nextdoor · FB groups</div>
+        <div class="pfact"><strong>Surprise</strong>Often surprised by their own success</div>
+      </div>
+      <div class="persona-q local-q">"We know in Florida we have this seasonally...why aren't you?" — Jan</div>
+    </div>
+    <div class="persona-card political">
+      <div class="emoji">🗳️</div>
+      <h3>Political Change Agent</h3>
+      <div class="tagline">Fighters for systemic reform</div>
+      <div class="persona-facts">
+        <div class="pfact"><strong>Driver</strong>Justice</div>
+        <div class="pfact"><strong>Win looks like</strong>A vote changes. A bill passes.</div>
+        <div class="pfact"><strong>Key barrier</strong>Complex path to impact; hard to ID DMs</div>
+        <div class="pfact"><strong>Behavior</strong>Already civically engaged · long-game thinker</div>
+        <div class="pfact"><strong>Timeframe</strong>Defines success in years, not weeks</div>
+      </div>
+      <div class="persona-q political-q">"If we need to, we will, and we can mobilize against you." — Hayden</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── PERSONA PRESSURE TEST ──────────────────────────────────────────────── -->
+<div class="pressure-section">
+  <h2>✅ Persona Pressure Test (Activity 7 — 4:15–4:35)</h2>
+  <div style="font-size:12px;color:var(--gray-text);margin-bottom:14px;">For each selected concept: does it have a clear, specific line of sight to each persona's needs? Fill in after concepts are selected. Raise a flag if a connection is vague or missing.</div>
+  <div class="pressure-grid">
+    <div class="pressure-card pressure-c1">
+      <div class="pressure-header">Concept A: The Coach</div>
+      <div class="pressure-body">
+        <div class="pressure-cell lh"><span class="plabel">🏡 LOCAL HERO</span>Clear line — one action at a time removes the overwhelm she feels stepping into advocacy</div>
+        <div class="pressure-cell pca"><span class="plabel">🗳️ POL. CHANGE AGENT</span>[ Fill in → Does this work for him? ]</div>
+      </div>
+    </div>
+    <div class="pressure-card pressure-c2">
+      <div class="pressure-header">Concept B: The Campaign Mirror</div>
+      <div class="pressure-body">
+        <div class="pressure-cell lh"><span class="plabel">🏡 LOCAL HERO</span>[ Fill in → ]</div>
+        <div class="pressure-cell pca"><span class="plabel">🗳️ POL. CHANGE AGENT</span>[ Fill in → ]</div>
+      </div>
+    </div>
+    <div class="pressure-card pressure-c3">
+      <div class="pressure-header">Concept C: The Veteran</div>
+      <div class="pressure-body">
+        <div class="pressure-cell lh"><span class="plabel">🏡 LOCAL HERO</span>[ Fill in → ]</div>
+        <div class="pressure-cell pca"><span class="plabel">🗳️ POL. CHANGE AGENT</span>[ Fill in → Strong fit — validation from campaigns like his is high-credibility ]</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="footer-note">
+  Co-Pilot Northstar Vision Workshop Board · Starter Experience Squad · Q2 2026 · Change.org · Internal / Confidential
+</div>
+
+</body>
+</html>

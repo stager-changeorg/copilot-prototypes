@@ -1,0 +1,2893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Conversational Co-Pilot — Change.org Campaign Co-Pilot</title>
+  <style>
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-Thin.ttf') format('truetype'); font-weight:100; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-ExtraLight.ttf') format('truetype'); font-weight:200; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-Light.ttf') format('truetype'); font-weight:300; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-Regular.ttf') format('truetype'); font-weight:400; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-Medium.ttf') format('truetype'); font-weight:500; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-SemiBold.ttf') format('truetype'); font-weight:600; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-Bold.ttf') format('truetype'); font-weight:700; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-ExtraBold.ttf') format('truetype'); font-weight:800; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-Black.ttf') format('truetype'); font-weight:900; font-style:normal; font-display:swap; }
+  </style>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:       #e01a2b;
+      --action:    #ffe600;
+      --action-dk: #ffdb00;
+      --blue:      #2563eb;
+      --blue-dk:   #1e3a8a;
+      --blue-msg:  #eff6ff;
+      --blue-brd:  rgba(37,99,235,0.15);
+      --green:     #059669;
+      --white:     #ffffff;
+      --gray-50:   #f8fafc;
+      --gray-100:  #f1f5f9;
+      --gray-200:  #e2e8f0;
+      --gray-300:  #cbd5e1;
+      --gray-400:  #94a3b8;
+      --gray-500:  #64748b;
+      --gray-700:  #334155;
+      --gray-900:  #0f172a;
+      --nav-h:     3.75rem;
+      --serif:     'Commissioner', system-ui, sans-serif;
+      --sans:      'Commissioner', system-ui, sans-serif;
+      --mono:      'IBM Plex Mono', monospace;
+    }
+
+    html { height: 100%; }
+    body {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      font-family: var(--sans);
+      background: var(--gray-100);
+      color: var(--gray-900);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #app {
+      max-width: 430px;
+      margin: 0 auto;
+      flex: 1;
+      min-height: 0;
+      background: var(--white);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    /* ─── SCREEN VISIBILITY ─── */
+    .screen { display: none; flex-direction: column; flex: 1; min-height: 0; }
+    .screen.active { display: flex; }
+
+    /* ─────────────────────────────────────────
+       URL INPUT
+    ───────────────────────────────────────── */
+    #screen-url {
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem 3rem;
+      gap: 1.25rem;
+      overflow-y: auto;
+    }
+
+    .brand { font-family: var(--serif); font-size: 1.25rem; font-weight: 700; color: var(--red); }
+    .url-hed { font-family: var(--serif); font-size: 1.75rem; font-weight: 700; text-align: center; line-height: 1.15; }
+    .url-dek { font-size: 0.9375rem; color: var(--gray-500); text-align: center; line-height: 1.55; max-width: 28ch; }
+
+    .url-form { width: 100%; display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .field {
+      width: 100%; padding: 0.875rem 1rem;
+      border: 1.5px solid var(--gray-200); border-radius: 10px;
+      font-size: 0.9375rem; font-family: var(--sans); background: var(--gray-50);
+      outline: none; transition: border-color .15s, background .15s;
+    }
+    .field:focus { border-color: var(--blue); background: var(--white); }
+    .field::placeholder { color: var(--gray-400); }
+    .field.err { border-color: var(--red); }
+
+    .btn-red {
+      width: 100%; padding: 0.9rem 1.5rem;
+      background: var(--action); color: #2d2f37; border: none; border-radius: 8px;
+      font-size: 1rem; font-weight: 600; font-family: var(--sans); cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-red:active { opacity: 0.88; }
+
+    .url-hint { font-size: 0.8125rem; color: var(--gray-400); text-align: center; }
+    .url-hint a { color: var(--blue); text-decoration: none; font-weight: 500; cursor: pointer; }
+
+    /* ─────────────────────────────────────────
+       OVERLAYS (parsing / building)
+    ───────────────────────────────────────── */
+    .overlay {
+      position: fixed; top: 0; bottom: 0;
+      left: 50%; transform: translateX(-50%);
+      width: min(100%, 430px);
+      background: linear-gradient(180deg, #c4d0f5 0%, #e8f0ff 45%, #ffffeb 100%); z-index: 800;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.25rem;
+    }
+    .overlay.hidden { display: none; }
+
+    .spinner {
+      width: 2.75rem; height: 2.75rem;
+      border: 3px solid var(--gray-200); border-top-color: var(--red);
+      border-radius: 50%; animation: spin .65s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .ov-hed { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; color: var(--gray-700); }
+    .ov-sub { font-family: var(--mono); font-size: 0.8125rem; color: var(--gray-400); }
+
+    .build-list { display: flex; flex-direction: column; gap: .5rem; }
+    .build-item { font-family: var(--mono); font-size: .8125rem; color: var(--gray-400); display: flex; align-items: center; gap: .5rem; transition: color .25s; }
+    .build-item.on   { color: var(--gray-900); }
+    .build-item.done { color: var(--green); }
+    .b-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    /* ─────────────────────────────────────────
+       ONBOARDING CHAT (full screen)
+    ───────────────────────────────────────── */
+    #screen-onboard {
+      overflow: hidden;
+    }
+
+    .ob-header {
+      padding: .875rem 1.25rem .625rem;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex; align-items: center; gap: .625rem; flex-shrink: 0;
+    }
+    .ob-avatar {
+      width: 2rem; height: 2rem; border-radius: 7px;
+      background: transparent; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; overflow: hidden;
+    }
+    .ob-name { font-size: 1.0625rem; font-weight: 600; color: var(--gray-900); }
+    .ob-status { font-size: .6875rem; color: var(--blue); font-family: var(--mono); }
+    .ob-progress-wrap { flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: .25rem; }
+    .ob-pip { width: 6px; height: 6px; border-radius: 50%; background: var(--gray-200); transition: background .3s; }
+    .ob-pip.filled { background: var(--blue); }
+
+    .ob-messages {
+      flex: 1; overflow-y: auto; padding: 1rem 1.25rem;
+      display: flex; flex-direction: column; gap: .75rem;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .ob-footer { flex-shrink: 0; padding: .75rem 1.25rem calc(.875rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--gray-100); }
+
+    /* ─────────────────────────────────────────
+       CHAT BUBBLES (shared by onboard + home)
+    ───────────────────────────────────────── */
+    .bubble-row { display: flex; gap: .5rem; align-items: flex-end; }
+    .bubble-row.right { flex-direction: row-reverse; }
+
+    .bubble-avatar {
+      width: 1.75rem; height: 1.75rem; border-radius: 6px;
+      background: transparent; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-bottom: .125rem; overflow: hidden;
+    }
+
+    .bubble {
+      max-width: 80%; padding: .625rem .875rem;
+      border-radius: 16px; font-size: .9375rem; line-height: 1.45;
+      animation: bubbleIn .2s ease-out;
+    }
+    .bubble.left  { background: var(--blue-msg); color: var(--gray-900); border-bottom-left-radius: 4px; }
+    .bubble.right { background: #1e293b; color: #f8fafc; border-bottom-right-radius: 4px; }
+    .bubble.signal { background: #eff6ff; border: 1.5px solid #bfdbfe; }
+
+    @keyframes bubbleIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .bubble-name {
+      font-family: var(--mono); font-size: .5625rem; font-weight: 500;
+      color: var(--blue); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .25rem;
+    }
+
+    .typing-indicator {
+      display: flex; gap: 4px; align-items: center; padding: .625rem .875rem;
+      background: var(--blue-msg); border-radius: 16px; border-bottom-left-radius: 4px;
+      width: fit-content;
+    }
+    .typing-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--blue);
+      animation: typingPulse 1.2s ease-in-out infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: .2s; }
+    .typing-dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes typingPulse {
+      0%, 60%, 100% { opacity: .3; transform: scale(.8); }
+      30%            { opacity: 1;  transform: scale(1); }
+    }
+
+    /* Quick reply chips */
+    .qr-row { display: flex; flex-wrap: wrap; gap: .4375rem; margin-top: .375rem; padding-left: 2.25rem; }
+    .qr-chip {
+      padding: .4375rem .875rem;
+      border: 1.5px solid var(--blue); border-radius: 100px;
+      font-size: .8125rem; font-weight: 500; color: var(--blue);
+      background: var(--white); cursor: pointer; font-family: var(--sans);
+      transition: background .15s, color .15s;
+    }
+    .qr-chip:active, .qr-chip.used { background: var(--blue); color: var(--white); }
+    .qr-chip.gray { border-color: var(--gray-300); color: var(--gray-500); }
+    .qr-chip.gray:active { background: var(--gray-200); color: var(--gray-700); }
+
+    /* Text input row */
+    .input-row {
+      display: flex; gap: .5rem; align-items: flex-end;
+    }
+    .chat-field {
+      flex: 1; padding: .6875rem .875rem;
+      border: 1.5px solid var(--gray-200); border-radius: 22px;
+      font-size: .9375rem; font-family: var(--sans); outline: none;
+      resize: none; max-height: 5rem; overflow-y: auto;
+      transition: border-color .15s;
+      line-height: 1.4;
+    }
+    .chat-field:focus { border-color: var(--blue); }
+    .chat-field::placeholder { color: var(--gray-400); }
+    .send-btn {
+      width: 2.5rem; height: 2.5rem; border-radius: 50%;
+      background: var(--action); border: none; color: #2d2f37;
+      font-size: 1rem; cursor: pointer; flex-shrink: 0; display: flex;
+      align-items: center; justify-content: center;
+      transition: opacity .15s;
+    }
+    .send-btn:disabled { opacity: .4; cursor: default; }
+
+    /* ─────────────────────────────────────────
+       HOME SCREEN
+    ───────────────────────────────────────── */
+    #screen-home {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* No longer sticky — scrolls with page */
+    .home-sticky {
+      background: var(--white);
+    }
+
+    .statusbar {
+      padding: .4375rem 1.25rem 0;
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: var(--mono); font-size: .6875rem; font-weight: 600; color: var(--gray-700);
+    }
+
+    .topbar {
+      padding: .5rem 1.25rem .375rem;
+      display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+    }
+    .campaign-img {
+      width: 2.75rem; height: 2.75rem; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+      background: linear-gradient(135deg,#374151,#9ca3af);
+    }
+    .topbar-info { flex: 1; min-width: 0; }
+    .topbar-eyebrow { font-family: var(--mono); font-size: .5625rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .1875rem; }
+    .topbar-title { font-family: var(--serif); font-size: 1rem; font-weight: 700; color: var(--gray-900); line-height: 1.25; }
+
+    /* ── Action buttons row (Share / Copy link / View live / Edit) ── */
+    .action-row {
+      display: flex; align-items: flex-start; justify-content: space-around;
+      padding: .75rem 1rem 1rem;
+    }
+    .action-btn {
+      display: flex; flex-direction: column; align-items: center; gap: .4375rem;
+      flex: 1;
+    }
+    .action-circle {
+      width: 3.25rem; height: 3.25rem; border-radius: 50%;
+      border: 1.5px solid var(--gray-200); background: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .15s, border-color .15s;
+    }
+    .action-circle:active { background: var(--gray-100); }
+    .action-circle.action-primary {
+      background: var(--action); border-color: var(--action);
+    }
+    .action-circle.action-primary:active { background: var(--action-dk); }
+    .action-circle svg { pointer-events: none; }
+    .action-lbl {
+      font-size: .6875rem; font-weight: 500; color: var(--gray-700);
+      font-family: var(--sans); text-align: center;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: flex; gap: .4375rem; padding: 0 1.25rem 1.25rem;
+    }
+    .stat-chip {
+      flex: 1; background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: 9px; padding: .5rem .375rem; text-align: center;
+    }
+    .stat-val { font-family: var(--mono); font-size: .9375rem; font-weight: 600; color: var(--gray-900); display: block; }
+    .stat-lbl { font-size: .5625rem; color: var(--gray-500); display: block; margin-top: .0625rem; }
+
+    /* Dial */
+    .dial-section { padding: .125rem 1.25rem .75rem; }
+    .dial-svg { width: 100%; display: block; }
+
+    /* Milestone flash */
+    .milestone-flash {
+      margin: 0 1.25rem .25rem;
+      background: linear-gradient(135deg, var(--action), #fbbf24);
+      color: #2d2f37; text-align: center; padding: .625rem .875rem;
+      border-radius: 10px; font-family: var(--serif); font-size: .9375rem; font-weight: 700;
+      animation: popIn .35s cubic-bezier(.34,1.56,.64,1);
+    }
+    .milestone-flash.hidden { display: none; }
+    @keyframes popIn { from { transform:scale(.9); opacity:0; } to { transform:scale(1); opacity:1; } }
+
+    /* Campaign summary bar */
+    .summary-bar {
+      padding: .875rem 1.25rem .875rem;
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-100);
+      display: flex; align-items: center; justify-content: space-between; gap: .625rem;
+    }
+    .summary-left { flex: 1; min-width: 0; }
+    .summary-phase {
+      font-family: var(--mono); font-size: .5625rem; font-weight: 500;
+      color: var(--blue); text-transform: uppercase; letter-spacing: .09em; margin-bottom: .125rem;
+    }
+    .summary-text { font-size: .8125rem; color: var(--gray-700); line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .summary-roadmap-btn {
+      font-size: .75rem; font-weight: 600; color: var(--blue);
+      background: none; border: none; cursor: pointer; font-family: var(--sans);
+      white-space: nowrap; flex-shrink: 0; padding: 0;
+    }
+
+    /* Home scrollable content — no longer needs own scroll */
+    .home-scroll {
+      padding: 1rem 1.25rem calc(var(--nav-h) + 5rem);
+    }
+
+    /* ── Focus task card ── */
+    .focus-card {
+      background: var(--white); border: 1.5px solid var(--gray-200);
+      border-radius: 16px; padding: 1.25rem; margin-bottom: .875rem;
+    }
+    .focus-eyebrow {
+      font-family: var(--mono); font-size: .5625rem; font-weight: 600;
+      color: var(--blue); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .5rem;
+    }
+    .focus-title {
+      font-family: var(--serif); font-size: 1.25rem; font-weight: 700;
+      color: var(--gray-900); line-height: 1.2; margin-bottom: .375rem;
+    }
+    .focus-context { font-size: .875rem; color: var(--gray-500); line-height: 1.45; margin-bottom: 1rem; }
+    .focus-cta-btn {
+      width: 100%; padding: .8125rem; background: var(--action); color: #2d2f37;
+      border: none; border-radius: 8px; font-size: .9375rem; font-weight: 600;
+      font-family: var(--sans); cursor: pointer; margin-bottom: .625rem;
+      transition: opacity .15s;
+    }
+    .focus-cta-btn:active { opacity: .88; }
+    .focus-secondary { display: flex; align-items: center; justify-content: space-between; }
+    .focus-toggle-btn {
+      font-size: .8125rem; font-weight: 500; color: var(--blue);
+      background: none; border: none; cursor: pointer; font-family: var(--sans); padding: 0;
+    }
+    .focus-done-btn {
+      font-size: .8125rem; font-weight: 500; color: var(--green);
+      background: none; border: none; cursor: pointer; font-family: var(--sans); padding: 0;
+    }
+    .focus-expanded {
+      margin-top: .875rem; padding-top: .875rem; border-top: 1px solid var(--gray-100);
+      display: none;
+    }
+    .focus-expanded.open { display: block; }
+    .focus-detail-text { font-size: .875rem; color: var(--gray-700); line-height: 1.5; margin-bottom: .875rem; }
+    .focus-ask-btn {
+      width: 100%; padding: .625rem; border: 1.5px solid var(--blue);
+      border-radius: 9px; background: rgba(37,99,235,.04); color: var(--blue);
+      font-size: .8125rem; font-weight: 600; font-family: var(--sans); cursor: pointer;
+    }
+
+    /* ── All tasks ── */
+    .all-tasks-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .6875rem 0; cursor: pointer; border-top: 1px solid var(--gray-100);
+    }
+    .all-tasks-label { font-size: .875rem; font-weight: 500; color: var(--gray-700); }
+    .all-tasks-count { font-family: var(--mono); font-size: .75rem; color: var(--gray-400); }
+    .all-tasks-chev { font-size: .625rem; color: var(--gray-400); transition: transform .2s; }
+    .all-tasks-chev.open { transform: rotate(180deg); }
+    .all-tasks-list { display: none; padding-bottom: .5rem; }
+    .all-tasks-list.open { display: block; }
+    .task-phase-group { margin-bottom: .75rem; }
+    .task-phase-lbl {
+      font-family: var(--mono); font-size: .5rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .1em; color: var(--gray-400);
+      padding: .25rem 0; border-bottom: 1px solid var(--gray-100); margin-bottom: .25rem;
+    }
+    .task-phase-lbl.cur { color: var(--blue); }
+    .task-row { display: flex; align-items: flex-start; gap: .5rem; padding: .3125rem 0; cursor: pointer; }
+    .task-dot {
+      width: .75rem; height: .75rem; border-radius: 50%;
+      border: 1.5px solid var(--gray-300); flex-shrink: 0; margin-top: .2rem;
+      transition: background .2s, border-color .2s;
+    }
+    .task-dot.done { background: var(--green); border-color: var(--green); }
+    .task-dot.active { border-color: var(--blue); background: rgba(37,99,235,.08); }
+    .task-name { font-size: .875rem; color: var(--gray-700); line-height: 1.35; flex: 1; }
+    .task-name.active { color: var(--gray-900); font-weight: 500; }
+    .task-name.done { color: var(--gray-400); text-decoration: line-through; }
+
+    /* ── Inset chat panel — full-width within app margins ── */
+    #chat-panel {
+      position: fixed;
+      left: max(1rem, calc(50% - 215px + 1rem));
+      right: max(1rem, calc(50% - 215px + 1rem));
+      bottom: calc(var(--nav-h) + 1rem);
+      top: auto;
+      max-height: 80vh;
+      background: var(--white);
+      border-radius: 16px;
+      z-index: 500;
+      display: flex; flex-direction: column;
+      box-shadow: 0 -4px 40px rgba(0,0,0,.15), 0 0 0 1px rgba(0,0,0,.06);
+      transform: scale(0.97) translateY(24px);
+      transform-origin: bottom center;
+      opacity: 0;
+      pointer-events: none;
+      transition: transform .22s cubic-bezier(.32,1.1,.64,1), opacity .2s ease;
+      overflow: hidden;
+    }
+    #chat-panel.open {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* No backdrop — panel floats over content without dimming */
+    #chat-backdrop { display: none !important; }
+
+    .cp-header {
+      padding: .8125rem 1rem .6875rem;
+      display: flex; align-items: center; gap: .625rem;
+      border-bottom: 1px solid var(--gray-100); flex-shrink: 0;
+    }
+    .cp-avatar {
+      width: 1.75rem; height: 1.75rem; border-radius: 6px;
+      background: transparent; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; overflow: hidden;
+    }
+    .cp-name { font-size: 1.0625rem; font-weight: 600; color: var(--gray-900); flex: 1; }
+    .cp-roadmap-btn {
+      font-size: .75rem; font-weight: 600; color: var(--blue);
+      background: var(--blue-light); border: none; cursor: pointer;
+      padding: .3125rem .625rem; border-radius: 99px;
+      font-family: var(--sans); white-space: nowrap;
+    }
+    .cp-roadmap-btn:active { opacity: .75; }
+    .cp-close {
+      width: 1.75rem; height: 1.75rem; border-radius: 50%;
+      background: var(--gray-100); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8125rem; color: var(--gray-500); flex-shrink: 0;
+    }
+
+    .cp-messages {
+      flex: 1; overflow-y: auto; padding: .875rem 1rem;
+      display: flex; flex-direction: column; gap: .75rem;
+      -webkit-overflow-scrolling: touch; scroll-behavior: smooth;
+    }
+
+    .cp-input-bar {
+      flex-shrink: 0; padding: .5rem .875rem .75rem;
+      border-top: 1px solid var(--gray-100); background: var(--white);
+      display: flex; align-items: flex-end; gap: .375rem;
+    }
+    .mic-btn {
+      width: 2.375rem; height: 2.375rem; border-radius: 50%;
+      background: var(--gray-100); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;
+      transition: background .15s;
+    }
+    .mic-btn.recording {
+      background: var(--red);
+      animation: micPulse .75s ease-in-out infinite;
+    }
+    @keyframes micPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(224,26,43,.4); }
+      50%      { box-shadow: 0 0 0 7px rgba(224,26,43,0); }
+    }
+
+
+    /* ── In-chat action card ── */
+    .cp-action-card {
+      background: var(--gray-50); border: 1.5px solid var(--gray-200);
+      border-radius: 10px; padding: .875rem; margin-top: .5rem;
+    }
+    .cp-action-label {
+      font-family: var(--mono); font-size: .5rem; font-weight: 600;
+      color: var(--blue); text-transform: uppercase; letter-spacing: .1em;
+      margin-bottom: .375rem;
+    }
+    .cp-action-title { font-family: var(--serif); font-size: .9375rem; font-weight: 700; color: var(--gray-900); line-height: 1.25; margin-bottom: .375rem; }
+    .cp-action-why { font-size: .8125rem; color: var(--gray-500); line-height: 1.4; margin-bottom: .75rem; }
+    .cp-action-cta {
+      width: 100%; padding: .625rem; background: var(--action); color: #2d2f37;
+      border: none; border-radius: 8px; font-size: .875rem; font-weight: 700;
+      font-family: var(--sans); cursor: pointer;
+    }
+    .cp-action-secondary {
+      display: flex; gap: .5rem; margin-top: .5rem; flex-wrap: wrap;
+    }
+    .cp-action-sec-btn {
+      font-size: .75rem; color: var(--gray-500); background: none;
+      border: 1px solid var(--gray-200); border-radius: 99px;
+      padding: .25rem .6875rem; cursor: pointer; font-family: var(--sans);
+    }
+    .cp-action-sec-btn:active { background: var(--gray-100); }
+    /* ─────────────────────────────────────────
+       FULL ROADMAP SCREEN
+    ───────────────────────────────────────── */
+    #screen-roadmap {
+      overflow: hidden;
+    }
+
+    .rm-header {
+      padding: .75rem 1.25rem;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex; align-items: center; gap: .875rem; flex-shrink: 0;
+    }
+    .rm-back {
+      width: 2rem; height: 2rem; border-radius: 50%; border: 1.5px solid var(--gray-200);
+      background: var(--white); display: flex; align-items: center; justify-content: center;
+      font-size: .875rem; cursor: pointer;
+    }
+    .rm-title { font-family: var(--serif); font-size: 1.0625rem; font-weight: 700; color: var(--gray-900); }
+
+    .rm-scroll { flex: 1; overflow-y: auto; padding: 1.25rem 1.25rem 2rem; -webkit-overflow-scrolling: touch; }
+
+    .rm-phase-block { margin-bottom: 1.25rem; }
+
+    .rm-phase-header {
+      display: flex; align-items: center; gap: .625rem; margin-bottom: .625rem;
+    }
+    .rm-phase-dot {
+      width: 1.125rem; height: 1.125rem; border-radius: 50%;
+      border: 2px solid var(--gray-300); background: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .5rem; font-weight: 700; color: var(--gray-400);
+      flex-shrink: 0; font-family: var(--mono);
+    }
+    .rm-phase-dot.cur  { background: var(--blue); border-color: var(--blue); color: var(--white); }
+    .rm-phase-dot.done { background: var(--blue); border-color: var(--blue); color: var(--white); }
+
+    .rm-phase-connector {
+      width: 2px; height: 1.375rem; background: var(--gray-200);
+      margin-left: calc(.5625rem - 1px); margin-bottom: -.25rem;
+    }
+    .rm-phase-connector.done { background: var(--blue); }
+
+    .rm-phase-name-txt {
+      font-family: var(--mono); font-size: .6875rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .08em;
+    }
+    .rm-phase-name-txt.cur  { color: var(--blue); }
+    .rm-phase-name-txt.done { color: var(--blue); }
+    .rm-phase-name-txt.upcoming { color: var(--gray-400); }
+
+    .rm-tasks { margin-left: 1.75rem; display: flex; flex-direction: column; gap: .25rem; position: relative; }
+    .rm-tasks::before {
+      content: ''; position: absolute;
+      left: calc(-1.75rem + 0.5625rem - 1px);
+      top: 0; bottom: 0;
+      width: 2px; background: var(--gray-200);
+    }
+
+    .rm-task-toggle {
+      background: none; border: none; padding: .4375rem .625rem; text-align: left;
+      border-radius: 8px; cursor: pointer; width: 100%;
+      display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+      font-family: var(--sans);
+      transition: background .15s;
+    }
+    .rm-task-toggle:hover { background: var(--gray-50); }
+    .rm-task-name { font-size: .875rem; color: var(--gray-900); font-weight: 700; line-height: 1.35; flex: 1; }
+    .rm-task-name.cur { color: var(--gray-900); }
+    .rm-chevron { font-size: .625rem; color: var(--gray-400); transition: transform .2s; flex-shrink: 0; }
+    .rm-chevron.open { transform: rotate(180deg); }
+
+    .rm-task-detail {
+      font-size: .8125rem; color: var(--gray-500); line-height: 1.5;
+      padding: .25rem .625rem .5rem;
+      display: none;
+    }
+    .rm-task-detail.open { display: block; }
+
+    /* ─────────────────────────────────────────
+       BOTTOM NAV
+    ───────────────────────────────────────── */
+    #bottom-nav {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: min(100%, 430px);
+      height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+      background: var(--white); border-top: 1px solid var(--gray-200);
+      display: none; align-items: stretch; z-index: 300;
+      box-shadow: 0 -1px 0 rgba(0,0,0,.06), 0 -4px 12px rgba(0,0,0,.04);
+    }
+    .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .25rem; position: relative; }
+    .nav-tab.active .nav-ico, .nav-tab.active .nav-lbl { color: var(--blue); font-weight: 700; }
+    .nav-tab.off .nav-ico, .nav-tab.off .nav-lbl { color: var(--gray-500); }
+    .nav-tab.off { pointer-events: none; }
+    .nav-ico { font-size: 1.1875rem; line-height: 1; display: flex; align-items: center; justify-content: center; }
+    .nav-lbl { font-size: .5rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .nav-pip { position: absolute; top: .3125rem; width: 3px; height: 3px; border-radius: 50%; background: var(--blue); }
+
+    /* ── Circular FAB with badge ── */
+    #chat-fab-wrap {
+      position: fixed;
+      bottom: calc(var(--nav-h) + .75rem);
+      right: max(.875rem, calc(50% - 215px + .875rem));
+      z-index: 400; display: none;
+    }
+    #chat-fab {
+      border-radius: 100px;
+      background: #F34E49; color: #ffffff; border: none; cursor: pointer;
+      display: flex; align-items: center; gap: .375rem;
+      padding: .5625rem 1rem .5625rem .875rem;
+      font-size: .8125rem; font-weight: 600; font-family: var(--sans); letter-spacing: .01em;
+      box-shadow: 0 4px 20px rgba(243,78,73,.35); transition: transform .15s;
+      white-space: nowrap;
+    }
+    #chat-fab:active { transform: scale(.97); }
+    .fab-logo { width: 1.125rem; height: 1.125rem; flex-shrink: 0; }
+    .fab-badge {
+      position: absolute; top: -.1875rem; right: -.1875rem;
+      width: 1.125rem; height: 1.125rem; border-radius: 50%;
+      background: var(--red); color: white; border: 2px solid white;
+      font-size: .5rem; font-weight: 700; font-family: var(--mono);
+      display: flex; align-items: center; justify-content: center;
+      animation: badgePop .3s cubic-bezier(.34,1.56,.64,1);
+    }
+    .fab-badge.hidden { display: none; }
+    @keyframes badgePop { from { transform:scale(0); } to { transform:scale(1); } }
+
+    /* ─────────────────────────────────────────
+       DEMO CONTROLS
+    ───────────────────────────────────────── */
+    #demo-controls {
+      background: var(--gray-900);
+      /* in-flow at bottom of home-scroll — never overlaps any UI */
+    }
+    .demo-tab {
+      width: 100%; padding: .5625rem 1rem; background: var(--gray-900); color: var(--gray-400);
+      border: none; font-size: .5625rem; font-family: var(--mono); text-transform: uppercase;
+      letter-spacing: .12em; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    }
+    .demo-inner { padding: 0 1rem .875rem; display: none; }
+    .demo-inner.open { display: block; }
+    .demo-sub { font-family: var(--mono); font-size: .5rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: .12em; margin: .75rem 0 .375rem; }
+    .demo-btn {
+      display: block; width: 100%; padding: .4375rem .625rem; margin-bottom: .3125rem;
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 6px; color: var(--white); font-size: .8125rem; font-family: var(--sans);
+      text-align: left; cursor: pointer; transition: background .15s;
+    }
+    .demo-btn:hover { background: rgba(255,255,255,.13); }
+
+    /* ─────────────────────────────────────────
+       CONFETTI
+    ───────────────────────────────────────── */
+    #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 999; }
+
+    /* ─── PROTOTYPE SWITCHER ─── */
+    #proto-switcher {
+      max-width: 430px;
+      width: 100%;
+      margin: 0 auto;
+      background: #111827;
+      display: flex;
+      align-items: center;
+    }
+    .proto-tab {
+      flex: 1; padding: 0.5625rem 0.5rem;
+      text-align: center; text-decoration: none;
+      color: #6b7280; font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.5625rem; letter-spacing: 0.09em; text-transform: uppercase; font-weight: 500;
+      transition: color 0.15s, background 0.15s;
+    }
+    .proto-tab.current { color: #ffffff; background: rgba(255,255,255,0.08); }
+    .proto-tab:not(.current):hover { color: #d1d5db; }
+    .proto-divider { width: 1px; height: 1.125rem; background: rgba(255,255,255,0.12); flex-shrink: 0; }
+
+    /* Saved petition card */
+    .saved-card {
+      width: 100%; background: var(--gray-50); border: 1.5px solid var(--gray-200);
+      border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: 0.375rem;
+    }
+    .saved-card.hidden { display: none; }
+    .saved-card-label { font-family: var(--mono); font-size: 0.5625rem; font-weight: 500; color: var(--blue); text-transform: uppercase; letter-spacing: 0.1em; }
+    .saved-card-title { font-family: var(--serif); font-size: 0.9375rem; font-weight: 700; color: var(--gray-900); line-height: 1.3; }
+    .saved-card-reset { font-size: 0.8125rem; color: var(--gray-400); cursor: pointer; text-align: center; margin-top: 0.125rem; }
+
+/* Activity modules (comments + promotions) */
+/* ── Activity modules (Figma-matched) ── */
+.activity-module { margin-bottom: 1.75rem; }
+.activity-module-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: .625rem;
+}
+.activity-module-title {
+  font-size: 1rem; font-weight: 700; color: var(--gray-900);
+  font-family: var(--serif);
+}
+.activity-module-count {
+  font-family: var(--mono); font-size: .75rem; color: var(--gray-400);
+  font-weight: 400; margin-left: .25rem;
+}
+.activity-module-link {
+  font-size: .8125rem; font-weight: 600; color: var(--gray-900);
+  text-decoration: none;
+}
+.activity-notif-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.25rem; height: 1.25rem; border-radius: 100px;
+  background: var(--blue); color: #fff;
+  font-family: var(--mono); font-size: .5625rem; font-weight: 700;
+  padding: 0 .3125rem; margin-left: .375rem; vertical-align: middle;
+}
+/* Comment cards */
+.comment-card {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: 12px; padding: 1rem; margin-bottom: .625rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+.comment-card-top {
+  display: flex; align-items: center; gap: .625rem; margin-bottom: .75rem;
+}
+.comment-avatar {
+  width: 2rem; height: 2rem; border-radius: 50%;
+  background: #dde4f5; display: flex; align-items: center; justify-content: center;
+  font-size: .8125rem; font-weight: 700; color: #3d5af1;
+  flex-shrink: 0; font-family: var(--sans);
+}
+.comment-name {
+  font-size: .875rem; font-weight: 600; color: var(--gray-900);
+}
+.comment-time {
+  font-size: .75rem; color: var(--gray-400); margin-left: .25rem;
+}
+.comment-body {
+  font-size: .9375rem; color: var(--gray-700); line-height: 1.5;
+  font-style: italic; margin-bottom: .75rem;
+}
+.comment-footer {
+  display: flex; align-items: center; gap: .375rem;
+  font-size: .8125rem; color: var(--gray-400);
+}
+/* Promo cards */
+.promo-card {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: 12px; padding: 1rem; margin-bottom: .625rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  display: flex; align-items: center; gap: .875rem;
+}
+.promo-platform-ico {
+  width: 2.25rem; height: 2.25rem; border-radius: 8px;
+  background: var(--blue-light); display: flex; align-items: center;
+  justify-content: center; font-size: 1.125rem; flex-shrink: 0;
+}
+.promo-info { flex: 1; min-width: 0; }
+.promo-source { font-size: .875rem; font-weight: 600; color: var(--gray-900); }
+.promo-meta { font-size: .75rem; color: var(--gray-500); margin-top: .125rem; }
+    .promo-spend { font-size: .75rem; font-weight: 600; color: var(--gray-700); }
+.activity-empty {
+  padding: 1.25rem; font-size: .875rem; color: var(--gray-400);
+  text-align: center; font-style: italic; border: 1px dashed var(--gray-200);
+  border-radius: 12px;
+}
+  </style>
+</head>
+<body>
+
+<div id="proto-switcher">
+  <a class="proto-tab" href="victory-paths.html">Victory Paths</a>
+  <div class="proto-divider"></div>
+  <a class="proto-tab current" href="copilot-chat.html">Conversational Co-Pilot</a>
+</div>
+
+<div id="demo-controls" style="max-width:430px;margin:0 auto;width:100%;">
+  <button class="demo-tab" onclick="toggleDemo()">
+    <span>⚙ Demo Controls</span><span id="demo-chev">▼</span>
+  </button>
+  <div class="demo-inner" id="demo-inner">
+    <div class="demo-sub">Signal Updates</div>
+    <button class="demo-btn" onclick="injectSignal(0)">📈 Signature milestone alert</button>
+    <button class="demo-btn" onclick="injectSignal(1)">📰 Trending news alert</button>
+    <button class="demo-btn" onclick="injectSignal(2)">📅 Upcoming event alert</button>
+    <button class="demo-btn" onclick="injectShareActivity()">👥 Marcus W. — Top Supporter Alert</button>
+    <button class="demo-btn" onclick="simulateMilestone()">🎉 Hit next signature milestone</button>
+    <div class="demo-sub">Navigation</div>
+    <button class="demo-btn" onclick="resetOnboarding()">↩ Reset to home screen</button>
+    <button class="demo-btn" onclick="redoOnboardingQuestions()">✏️ Redo onboarding questions</button>
+    <button class="demo-btn" onclick="showRoadmap()">🗺 Jump to full roadmap</button>
+    <button class="demo-btn" onclick="fullReset()">↺ Full reset</button>
+    <div class="demo-sub">Change Petition</div>
+    <div style="display:flex;gap:.375rem;margin-bottom:.375rem">
+      <input type="url" id="demo-url-input" placeholder="https://www.change.org/p/..." style="flex:1;padding:.4375rem .625rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:.8125rem;font-family:sans-serif;outline:none">
+      <button class="demo-btn" style="flex-shrink:0;margin:0" onclick="loadFromDemoInput()">Load</button>
+    </div>
+  </div>
+</div>
+
+<canvas id="confetti-canvas"></canvas>
+
+<div id="app">
+
+  <!-- ═══ URL INPUT ═══ -->
+  <div id="screen-url" class="screen active">
+    <div class="brand">change.org</div>
+    <h1 class="url-hed">Your Campaign<br>Co-Pilot is ready.</h1>
+    <p class="url-dek">Paste your petition URL to get a personalized AI-powered campaign plan.</p>
+    <div class="url-form">
+      <input type="url" id="petition-url" class="field" placeholder="https://www.change.org/p/your-petition">
+      <button class="btn-red" onclick="handleUrl()">Analyze my petition →</button>
+    </div>
+    <div id="saved-card" class="saved-card hidden">
+      <div class="saved-card-label">Saved petition</div>
+      <div class="saved-card-title" id="saved-card-title">—</div>
+      <button class="btn-red" onclick="continueWithSaved()" style="margin-top:0.5rem">Continue with this petition →</button>
+      <a class="saved-card-reset" onclick="clearSaved()">Use a different petition</a>
+    </div>
+    <p class="url-hint" id="url-hint-row">Testing? <a onclick="loadDemo()">Use the Lake Bonny petition</a></p>
+  </div>
+
+  <!-- ═══ PARSING OVERLAY ═══ -->
+  <div id="overlay-parse" class="overlay hidden">
+    <div class="spinner"></div>
+    <div class="ov-hed">Reading your petition...</div>
+    <div class="ov-sub" id="parse-status">Fetching petition data</div>
+  </div>
+
+  <!-- ═══ ONBOARDING CHAT ═══ -->
+  <div id="screen-onboard" class="screen">
+    <div class="ob-header">
+      <div class="ob-avatar" id="ob-avatar-el"></div>
+      <div>
+        <div class="ob-name">Campaign Co-Pilot</div>
+      </div>
+      <div class="ob-progress-wrap" id="ob-pips"></div>
+    </div>
+    <div class="ob-messages" id="ob-messages"></div>
+    <div class="ob-footer">
+      <div class="input-row" id="ob-input-row">
+        <input type="text" id="ob-text-input" class="chat-field" placeholder="Type your answer..." style="display:none">
+        <button id="ob-mic-btn" class="mic-btn" onclick="toggleObVoice()" title="Voice input" style="display:none">🎤</button>
+        <button class="send-btn" id="ob-send-btn" onclick="submitTextAnswer()" style="display:none" disabled>↑</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BUILDING OVERLAY ═══ -->
+  <div id="overlay-build" class="overlay hidden">
+    <div class="spinner"></div>
+    <div class="ov-hed">Building your plan...</div>
+    <div class="build-list">
+      <div class="build-item" id="bi1"><span class="b-dot"></span>Reviewing your answers</div>
+      <div class="build-item" id="bi2"><span class="b-dot"></span>Mapping winning campaigns</div>
+      <div class="build-item" id="bi3"><span class="b-dot"></span>Personalizing your roadmap</div>
+      <div class="build-item" id="bi4"><span class="b-dot"></span>Drafting your first actions</div>
+    </div>
+  </div>
+
+  <!-- ═══ HOME SCREEN ═══ -->
+  <div id="screen-home" class="screen">
+
+    <div class="home-sticky">
+      <div class="statusbar">
+        <span id="sb-time">9:41</span>
+        <span>●●●● 🔋</span>
+      </div>
+      <div class="topbar">
+        <div class="campaign-img" id="campaign-img">📋</div>
+        <div class="topbar-info">
+          <div class="topbar-title" id="home-title">—</div>
+        </div>
+      </div>
+
+      <!-- Action buttons: Share / Copy link / View live / Edit -->
+      <div class="action-row">
+        <div class="action-btn">
+          <button class="action-circle action-primary" title="Share">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          </button>
+          <span class="action-lbl">Share</span>
+        </div>
+        <div class="action-btn">
+          <button class="action-circle" title="Copy link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray-700)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </button>
+          <span class="action-lbl">Copy link</span>
+        </div>
+        <div class="action-btn">
+          <button class="action-circle" title="View live">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray-700)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <span class="action-lbl">View live</span>
+        </div>
+        <div class="action-btn">
+          <button class="action-circle" title="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray-700)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </button>
+          <span class="action-lbl">Edit</span>
+        </div>
+      </div>
+
+      <!-- Milestone flash -->
+      <div class="milestone-flash hidden" id="milestone-flash">🎉 Milestone!</div>
+
+      <!-- Half Dial -->
+      <div class="dial-section">
+        <svg class="dial-svg" viewBox="0 0 220 134" id="dial-svg">
+          <defs>
+            <linearGradient id="dialGrad" x1="16" y1="106" x2="16" y2="106" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#0038bc"/>
+              <stop offset="100%" stop-color="#4771ff"/>
+            </linearGradient>
+          </defs>
+          <path d="M 16 106 A 94 94 0 0 1 204 106" fill="none" stroke="#e2e8f0" stroke-width="8" stroke-linecap="round"/>
+          <path id="dial-arc" d="M 16 106 A 94 94 0 0 1 204 106" fill="none" stroke="url(#dialGrad)" stroke-width="8" stroke-linecap="round" stroke-dasharray="295" stroke-dashoffset="295" style="transition:stroke-dashoffset .7s ease;"/>
+          <text id="dial-num" x="110" y="78" font-family="Commissioner,monospace" font-size="32" font-weight="600" fill="#111827" text-anchor="middle">348</text>
+          <text x="110" y="95" font-family="Commissioner,sans-serif" font-size="9.5" fill="#6b7280" text-anchor="middle">signatures</text>
+          <text id="dial-goal" x="110" y="116" font-family="Commissioner,monospace" font-size="8" fill="#9ca3af" text-anchor="middle">Next goal: 500</text>
+          <text id="dial-lo" x="10" y="128" font-family="Commissioner,monospace" font-size="8" fill="#9ca3af" text-anchor="middle">0</text>
+          <text id="dial-hi" x="210" y="128" font-family="Commissioner,monospace" font-size="8" fill="#9ca3af" text-anchor="middle">500</text>
+        </svg>
+      </div>
+
+
+    </div>
+
+    <!-- Scrollable home content -->
+    <div class="home-scroll">
+
+      <!-- Comments module -->
+      <div class="activity-module" id="comments-module">
+        <div class="activity-module-header">
+          <div class="activity-module-title">Comments<span class="activity-notif-badge" id="cmt-badge">12</span></div>
+          <a class="activity-module-link" href="#">See all</a>
+        </div>
+        <div class="activity-module-items" id="cmt-items"></div>
+      </div>
+
+      <!-- Promotions module -->
+      <div class="activity-module" id="promotions-module">
+        <div class="activity-module-header">
+          <div class="activity-module-title">Promotions<span class="activity-notif-badge" id="prm-badge">2</span></div>
+          <a class="activity-module-link" href="#">See all</a>
+        </div>
+        <div class="activity-module-items" id="prm-items"></div>
+      </div>
+
+    </div><!-- /home-scroll -->
+
+  </div><!-- /screen-home -->
+
+  <!-- ═══ ROADMAP SCREEN ═══ -->
+  <div id="screen-roadmap" class="screen">
+    <div class="rm-header">
+      <button class="rm-back" onclick="showHome()">←</button>
+      <div class="rm-title">Your Full Roadmap</div>
+    </div>
+    <div class="rm-scroll" id="rm-scroll"></div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Bottom Nav -->
+<nav id="bottom-nav">
+  <div class="nav-tab active">
+    <div class="nav-pip"></div>
+    <div class="nav-ico">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </div>
+    <div class="nav-lbl">Home</div>
+  </div>
+  <div class="nav-tab off">
+    <div class="nav-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></div>
+    <div class="nav-lbl">Sharing</div>
+  </div>
+  <div class="nav-tab off">
+    <div class="nav-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8l9-6 9 6v14"/><path d="M9 22v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/></svg></div>
+    <div class="nav-lbl">Decision maker</div>
+  </div>
+  <div class="nav-tab off">
+    <div class="nav-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+    <div class="nav-lbl">Post update</div>
+  </div>
+</nav>
+
+<!-- Chat backdrop -->
+
+<!-- Inset chat panel -->
+<div id="chat-panel">
+  <div class="cp-header">
+    <div class="cp-avatar" id="cp-avatar-el"></div>
+    <div class="cp-name">Campaign Co-Pilot</div>
+    <button class="cp-roadmap-btn" onclick="closeChat();showRoadmap()">See roadmap</button>
+    <button class="cp-close" onclick="closeChat()">✕</button>
+  </div>
+  <div class="cp-messages" id="cp-messages"></div>
+  <div class="cp-input-bar">
+    <input type="text" id="cp-input" class="chat-field" placeholder="Ask anything about your campaign...">
+    <button id="mic-btn" class="mic-btn" onclick="toggleVoice()" title="Voice input">🎤</button>
+    <button class="send-btn" onclick="sendChatMsg()">↑</button>
+  </div>
+</div>
+
+<!-- Circular FAB with badge -->
+<div id="chat-fab-wrap">
+  <button id="chat-fab" onclick="toggleChat()"><svg class="fab-logo" viewBox="0 0 67 67" xmlns="http://www.w3.org/2000/svg"><path d="M67.0001 9.39759C66.9989 6.90481 66.0079 4.5145 64.2449 2.75224C62.4818 0.989966 60.0911 0 57.5983 0H9.40178C6.909 0 4.51826 0.989966 2.7552 2.75224C0.992144 4.5145 0.00111161 6.90481 0 9.39759V57.5932C0 60.0896 0.992144 62.4855 2.7552 64.2445C4.51826 66.0035 6.909 67 9.40178 67H57.5983C60.0911 67 62.4818 66.0035 64.2449 64.2445C66.0079 62.4855 66.9989 60.0896 67.0001 57.5932V9.39759ZM30.2662 43.2164C31.3857 43.214 32.4707 42.8282 33.3405 42.1233C34.2102 41.4184 34.8124 40.4369 35.0466 39.3421C35.0508 39.3237 35.1195 39.0071 35.1438 38.8673C35.1888 38.6492 35.308 38.4536 35.4809 38.3134C35.6539 38.1733 35.87 38.0973 36.0927 38.0984H43.0749C43.3388 38.1039 43.5899 38.2135 43.7734 38.4033C43.9175 38.5533 44.0061 38.748 44.0246 38.9552C44.0246 39.0013 44.0129 39.4577 44.0079 39.5197C43.8454 42.7206 42.7592 45.2892 41.0255 47.2046C40.0244 48.2973 38.8241 49.189 37.4888 49.8318C35.4017 50.8594 32.9612 51.3879 30.3013 51.3879C22.6215 51.3879 16.5546 47.0597 16.5546 38.678V28.7611C16.5546 20.4004 22.572 16.073 30.2285 16.0521H30.2729C37.8707 16.0521 43.899 20.2882 44.0305 28.4898V28.5828C44.0308 28.6986 44.0082 28.8133 43.9641 28.9203C43.92 29.0274 43.8552 29.1247 43.7734 29.2067C43.7121 29.2627 43.6437 29.3103 43.5699 29.3482C43.4184 29.4317 43.2479 29.4747 43.0749 29.473H36.1044C35.9377 29.4731 35.7739 29.4301 35.6287 29.3482C35.5099 29.2877 35.4063 29.2012 35.3254 29.0953C35.2445 28.9893 35.1884 28.8665 35.1614 28.736C35.1454 28.6523 35.127 28.5685 35.1086 28.4848C35.0408 28.1498 34.9595 27.8215 34.864 27.5074C34.4673 26.4269 33.7034 25.5202 32.7058 24.9459C31.7082 24.3717 30.5405 24.1664 29.4069 24.366C28.2733 24.5656 27.2459 25.1574 26.5044 26.0378C25.763 26.9183 25.3547 28.0314 25.3509 29.1824V38.2308C25.3484 40.9359 27.5619 43.2223 30.2662 43.2164ZM51.8494 51.3879C49.0572 51.3879 46.9492 49.0923 46.9492 46.3026C46.9492 43.6954 49.0572 41.5288 51.7874 41.5288C54.5796 41.5288 56.6885 43.698 56.6885 46.3026C56.691 49.0303 54.8309 51.3879 51.8494 51.3879Z" fill="white"/></svg>Campaign Co-Pilot</button>
+  <span class="fab-badge hidden" id="fab-badge">1</span>
+</div>
+
+
+<script>
+/* ═══════════════════════════════════════════════
+   PETITION DATA
+═══════════════════════════════════════════════ */
+// Change.org logo SVG — official brand mark
+const C_LOGO = `<svg viewBox="0 0 67 67" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" aria-label="Change.org"><path d="M67.0001 9.39759C66.9989 6.90481 66.0079 4.5145 64.2449 2.75224C62.4818 0.989966 60.0911 0 57.5983 0H9.40178C6.909 0 4.51826 0.989966 2.7552 2.75224C0.992144 4.5145 0.00111161 6.90481 0 9.39759V57.5932C0 60.0896 0.992144 62.4855 2.7552 64.2445C4.51826 66.0035 6.909 67 9.40178 67H57.5983C60.0911 67 62.4818 66.0035 64.2449 64.2445C66.0079 62.4855 66.9989 60.0896 67.0001 57.5932V9.39759ZM30.2662 43.2164C31.3857 43.214 32.4707 42.8282 33.3405 42.1233C34.2102 41.4184 34.8124 40.4369 35.0466 39.3421C35.0508 39.3237 35.1195 39.0071 35.1438 38.8673C35.1888 38.6492 35.308 38.4536 35.4809 38.3134C35.6539 38.1733 35.87 38.0973 36.0927 38.0984H43.0749C43.3388 38.1039 43.5899 38.2135 43.7734 38.4033C43.9175 38.5533 44.0061 38.748 44.0246 38.9552C44.0246 39.0013 44.0129 39.4577 44.0079 39.5197C43.8454 42.7206 42.7592 45.2892 41.0255 47.2046C40.0244 48.2973 38.8241 49.189 37.4888 49.8318C35.4017 50.8594 32.9612 51.3879 30.3013 51.3879C22.6215 51.3879 16.5546 47.0597 16.5546 38.678V28.7611C16.5546 20.4004 22.572 16.073 30.2285 16.0521H30.2729C37.8707 16.0521 43.899 20.2882 44.0305 28.4898V28.5828C44.0308 28.6986 44.0082 28.8133 43.9641 28.9203C43.92 29.0274 43.8552 29.1247 43.7734 29.2067C43.7121 29.2627 43.6437 29.3103 43.5699 29.3482C43.4184 29.4317 43.2479 29.4747 43.0749 29.473H36.1044C35.9377 29.4731 35.7739 29.4301 35.6287 29.3482C35.5099 29.2877 35.4063 29.2012 35.3254 29.0953C35.2445 28.9893 35.1884 28.8665 35.1614 28.736C35.1454 28.6523 35.127 28.5685 35.1086 28.4848C35.0408 28.1498 34.9595 27.8215 34.864 27.5074C34.4673 26.4269 33.7034 25.5202 32.7058 24.9459C31.7082 24.3717 30.5405 24.1664 29.4069 24.366C28.2733 24.5656 27.2459 25.1574 26.5044 26.0378C25.763 26.9183 25.3547 28.0314 25.3509 29.1824V38.2308C25.3484 40.9359 27.5619 43.2223 30.2662 43.2164ZM51.8494 51.3879C49.0572 51.3879 46.9492 49.0923 46.9492 46.3026C46.9492 43.6954 49.0572 41.5288 51.7874 41.5288C54.5796 41.5288 56.6885 43.698 56.6885 46.3026C56.691 49.0303 54.8309 51.3879 51.8494 51.3879Z" fill="#F34E49"/></svg>`;
+
+// Set avatars immediately so they're never blank
+document.addEventListener('DOMContentLoaded', () => {
+  const obAv = document.getElementById('ob-avatar-el');
+  const cpAv = document.getElementById('cp-avatar-el');
+  if (obAv) obAv.innerHTML = C_LOGO;
+  if (cpAv) cpAv.innerHTML = C_LOGO;
+});
+
+const TOPIC_IMGS = {
+  'flood infrastructure accountability': { bg:'linear-gradient(135deg,#1e40af,#60a5fa)', emoji:'🌊' },
+  'education':      { bg:'linear-gradient(135deg,#92400e,#f59e0b)', emoji:'📚' },
+  'environment':    { bg:'linear-gradient(135deg,#065f46,#34d399)', emoji:'🌿' },
+  'healthcare':     { bg:'linear-gradient(135deg,#0e7490,#67e8f9)', emoji:'🏥' },
+  'animal welfare': { bg:'linear-gradient(135deg,#6d28d9,#c4b5fd)', emoji:'🐾' },
+  'housing':        { bg:'linear-gradient(135deg,#1e3a5f,#6ea8fe)', emoji:'🏠' },
+  'public safety':  { bg:'linear-gradient(135deg,#78350f,#fcd34d)', emoji:'🚦' },
+};
+
+function setCampaignImg(petition) {
+  const el = document.getElementById('campaign-img');
+  if (!el) return;
+  if (petition.img) {
+    el.style.background = 'none';
+    el.innerHTML = '<img src="' + petition.img + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" alt="">';
+  } else {
+    const d = TOPIC_IMGS[petition.topic] || { bg:'linear-gradient(135deg,#374151,#9ca3af)', emoji:'📋' };
+    el.style.background = d.bg;
+    el.innerHTML = d.emoji;
+  }
+}
+
+const PETITIONS = [
+  { match:['overbreeding','breeding-regulations','stop-overbreeding','stricter-breeding'],
+    title:'Stop Overbreeding: Enforce Stricter Breeding Regulations in LA',
+    topic:'animal welfare', dm:'Jesse Zwick and Lana Negrete, Santa Monica City Council',
+    loc:'Los Angeles, CA', sigs:1184, cmt:14, prm:3, views:7100,
+    img:'https://assets.change.org/photos/4/vw/cz/jXvwCZUjuIfXTqA-800x450-noPad.jpg?1738709819',
+    phase:1,
+    roadmap:[
+      { name:'Spark', tasks:[
+        { t:'Share with LA animal rescue and shelter communities', d:'Text the petition to rescue operators, shelter volunteers, and dog owners in LA. Personal asks outperform cold posts.' },
+        { t:'Post in LA dog owner and rescue Facebook groups', d:'Find "Los Angeles Dog Owners," "LA Animal Rescue Network," and Nextdoor groups in your neighborhood.' },
+        { t:'Set up a custom Change.org vanity link', d:"Use Change.org's vanity URL feature. A short link is easier to share verbally at adoption events and shelter visits." },
+      ]},
+      { name:'Build', tasks:[
+        { t:'Collect comments from shelter workers and rescue operators', d:'Ask people on the front lines: "How many dogs did your shelter euthanize last month?" Real numbers from real people are hard to ignore.' },
+        { t:'Send your first update to all signers', d:'Thank them, share the current count, and ask each signer to share with one more person in LA today.' },
+        { t:'Reach 2,000 signatures and post a milestone update', d:'Post on social media tagging local news and animal welfare orgs. "We hit 2,000 — help us reach 5,000."' },
+      ]},
+      { name:'Pressure', tasks:[
+        { t:'Email Jesse Zwick and Lana Negrete directly', d:'Use their public contact pages on the Santa Monica City Council website. Reference the petition by name and current count.' },
+        { t:'Attend a Santa Monica City Council meeting', d:'Public comment is open. Bring printed signatures and 2–3 rescue operators to speak alongside you.' },
+        { t:'Pitch story to LA Times and local TV stations', d:'Lead with the euthanasia numbers. "X dogs euthanized last year in LA — 1,184 people are demanding it stop." Include shelter contacts.' },
+      ]},
+      { name:'Decision', tasks:[
+        { t:'Deliver signatures to City Council', d:'Download your supporter list from Change.org and present it at a public meeting. Make the delivery on the record.' },
+        { t:'Issue a press release on delivery day', d:'Restate all demands: breeding caps, licensing fees, ban online sales, mandate health screenings.' },
+        { t:"Use Change.org's Declare Victory feature", d:'Document the outcome publicly — even partial wins matter and inspire others.' },
+      ]},
+    ],
+    summaryTexts:[
+      "You're in Phase 1: Spark. Focus on your first 100 signatures this week.",
+      "You're in Phase 2: Build. Activate your signers and collect shelter stories.",
+      "You're in Phase 3: Pressure. Go direct to the Santa Monica City Council.",
+      "You're in Phase 4: Decision. Deliver and declare your position.",
+    ],
+    initialActions:[
+      "Share the petition with LA rescue operators and shelter volunteers personally — they have the biggest networks.",
+      "Post in LA dog owner and rescue Facebook groups today with the euthanasia statistics.",
+      "Ask one shelter worker to leave a video comment on the petition this week.",
+    ]
+  },
+  { match:['lake-bonny','bonny','independent-investigation-into-the-lake'],
+    title:'Independent Investigation into the Lake Bonny Flooding',
+    topic:'flood infrastructure accountability', dm:'Lakeland City Commission, Polk County, SWFWMD',
+    loc:'Lakeland, FL', sigs:348, cmt:12, prm:5, views:2100,
+    phase:1,
+    roadmap:[
+      { name:'Spark', tasks:[
+        { t:'Share with 20 Lakeland neighbors first', d:'Text or email the petition to 20 people in Lakeland and the Lake Bonny area. Ask each to share with two others.' },
+        { t:'Post in Lakeland & Polk County Facebook groups', d:'Find "Lakeland FL Community" and "Polk County Neighbors." Reshare every 2–3 days with fresh wording.' },
+        { t:'Set up a custom Change.org vanity link', d:"Use Change.org's vanity URL feature to create a short, memorable link. Add it to your bio and email signature." },
+      ]},
+      { name:'Build', tasks:[
+        { t:'Ask flood survivors to post video comments', d:"Ask neighbors: 'How many days was your home underwater?' Personal stories are far harder to dismiss than numbers." },
+        { t:'Send your first update to all signers', d:'Thank them, share the current count, and ask each signer to share with one more person in Lakeland today.' },
+        { t:'Celebrate 500 signatures on social media', d:'Post a milestone update tagging local news and community groups. "We hit 500 — help us reach 1,000."' },
+      ]},
+      { name:'Pressure', tasks:[
+        { t:'Email each Lakeland City Commissioner individually', d:'Use lakelandgov.net. Ask if they will commission an investigation modeled on the Hillsborough County process.' },
+        { t:'Submit formal comment to SWFWMD about pump failures', d:'Submit at watermatters.org requesting an audit of Lake Bonny drainage pump maintenance records. Copy both commissions.' },
+        { t:'Attend Lakeland City Commission public comment', d:'Meetings are first and third Mondays at 228 S. Massachusetts Ave. Bring printed signatures and 2–3 residents.' },
+        { t:'Pitch story to Lakeland Ledger and Bay News 9', d:'"17 inches of water, 3 weeks, zero accountability." Include 2–3 resident contacts willing to speak on record.' },
+      ]},
+      { name:'Decision', tasks:[
+        { t:'Deliver 1,000+ signatures to City Hall', d:'Download your supporter list from Change.org and deliver it at a public commission meeting.' },
+        { t:'Issue a press release on delivery day', d:'Restate all four demands publicly: investigation, public findings, infrastructure fixes, community oversight.' },
+        { t:"Use Change.org's Declare Victory feature", d:'Document the outcome and what you accomplished — even partial wins deserve to be on the record.' },
+      ]},
+    ],
+    summaryTexts:[
+      "You're in Phase 1: Spark. Focus on your first 100 signatures this week.",
+      "You're in Phase 2: Build. Activate your signers and collect survivor stories.",
+      "You're in Phase 3: Pressure. It's time to go direct to the decision makers.",
+      "You're in Phase 4: Decision. Deliver your signatures and declare your position.",
+    ],
+    initialActions:[
+      "Share the petition with 20 Lakeland neighbors personally — text works better than social for the first push.",
+      "Post in Lakeland FL Community and Polk County Facebook groups with a short note about what happened.",
+      "Ask one Lake Bonny flood survivor to leave a video comment on the petition this week.",
+    ]
+  },
+  { match:['save-arts','arts-education','lincoln'],
+    title:'Save Arts Education at Lincoln Middle School',
+    topic:'education', dm:'School Board of Directors',
+    loc:'Portland, OR', sigs:487, cmt:62, prm:28, views:2970, phase:1,
+    roadmap:[
+      { name:'Spark', tasks:[{ t:'Share with school parents and teachers', d:'Text or email parents in the school directory. Teachers are often the most trusted voices for this kind of campaign.' },{ t:'Post in Portland school and neighborhood groups', d:'Find PTA groups, Nextdoor, and Portland education groups on Facebook.' }]},
+      { name:'Build', tasks:[{ t:'Collect student and parent video comments', d:'Ask parents: "What will your child lose if arts are cut?" Video comments are hard for school boards to ignore.' },{ t:'Send first signer update', d:'Thank signers and ask each to share with one other parent this week.' }]},
+      { name:'Pressure', tasks:[{ t:'Attend the next School Board meeting', d:'Public comment sessions are your best shot. Bring printed signatures and 3 parents to speak.' },{ t:'Contact local journalists covering education', d:'Portland Tribune and OPB cover school budget stories. Pitch the human impact angle.' }]},
+      { name:'Decision', tasks:[{ t:'Deliver signatures to the School Board', d:'Arrive at the meeting with your printed supporter list. Make the delivery on the record.' },{ t:'Declare victory or escalate', d:"Use Change.org's Declare Victory to document the outcome. If the board doesn't respond, escalate to the district superintendent." }]},
+    ],
+    summaryTexts:[
+      "You're in Phase 1: Spark. Get to 100 signatures in the next two weeks.",
+      "You're in Phase 2: Build. Activate parents and collect powerful stories.",
+      "You're in Phase 3: Pressure. Attend the board meeting and engage media.",
+      "You're in Phase 4: Decision. Deliver and declare.",
+    ],
+    initialActions:[
+      "Share with every parent you know personally — text is faster than a post.",
+      "Post in the Lincoln Middle School PTA group today.",
+      "Ask one teacher to share the petition with their class parents.",
+    ]
+  },
+];
+
+const DEFAULT_PETITION = PETITIONS[0];
+
+/* ============================================
+   PETITION AI GENERATOR
+   Structured after the Change.org AI Guidance Prompt:
+   5 campaign buckets, mandatory "why this matters"
+   on every step, 5+ sharing actions spread across
+   phases, and 4 typed signal alerts.
+============================================ */
+function _slugToTitle(raw) {
+  return raw.replace(/[-_]+/g,' ').split(' ').filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' ')
+    .replace(/\b(And|Or|The|A|An|In|Of|For|To|At|By|On|With|From|Into)\b/g, m => m.toLowerCase())
+    .replace(/^./,c=>c.toUpperCase());
+}
+// Extracts a short issue noun from the title for use in step titles
+function _extractIssueNoun(title) {
+  const cleaned = title
+    .replace(/^(independent\s+)?/i,'')
+    .replace(/^(save|stop|protect|ban|end|fix|fund|keep|help|support|prevent|restore|reform|hold|demand|investigate|petition for an?\s+|calling for an?\s+)\s*/i,'')
+    .replace(/^(the|a|an)\s+/i,'');
+  return cleaned.split(' ').slice(0,4).join(' ');
+}
+function _detectMeta(words) {
+  const j = words.join(' ');
+  let loc='your community', dm='City Council';
+  const locs=[['new york','New York, NY'],['brooklyn','Brooklyn, NY'],['bronx','The Bronx, NY'],['los angeles','Los Angeles, CA'],['chicago','Chicago, IL'],['houston','Houston, TX'],['miami','Miami, FL'],['lakeland','Lakeland, FL'],['polk county','Polk County, FL'],['florida','Florida'],['texas','Texas'],['california','California'],['atlanta','Atlanta, GA'],['seattle','Seattle, WA'],['denver','Denver, CO'],['boston','Boston, MA'],['portland','Portland, OR'],['austin','Austin, TX'],['dallas','Dallas, TX'],['phoenix','Phoenix, AZ'],['detroit','Detroit, MI'],['washington dc','Washington, DC'],['dc ','Washington, DC'],['nashville','Nashville, TN'],['charlotte','Charlotte, NC'],['minneapolis','Minneapolis, MN'],['san francisco','San Francisco, CA'],['sf ','San Francisco, CA']];
+  for (const [k,v] of locs){ if(j.includes(k)){loc=v;break;} }
+  let topic='community accountability';
+  const rules=[
+    {keys:['school','teacher','student','educati','classroo','curricul','library'],topic:'public education',dm:'School Board'},
+    {keys:['park','tree','garden','green','trail','forest','wildlife','pollut','climate','clean air','environ','plastic','recycl'],topic:'environmental protection',dm:'Parks & Recreation Department'},
+    {keys:['police','crime','safety','gun','violen','justice','officer','shoot','brutali'],topic:'public safety & justice',dm:'Police Chief and City Council'},
+    {keys:['water','flood','drain','sewer','pump','pipe','pothole','road','bridge','infra','sidewalk'],topic:'infrastructure accountability',dm:'Public Works Department'},
+    {keys:['hous','rent','evict','afford','homeless','shelter','tenant','landlord','zoning'],topic:'affordable housing',dm:'City Housing Authority'},
+    {keys:['hospital','health','clinic','medic','doctor','nurse','mental health','wellness'],topic:'healthcare access',dm:'County Health Department'},
+    {keys:['animal','dog','cat','pet','wildlife','rescue','spay','neuter','breed'],topic:'animal welfare',dm:'Animal Services Department'},
+    {keys:['bus','transit','transport','subway','rail','bike','pedestrian','traffic'],topic:'public transit',dm:'Transit Authority'},
+    {keys:['invest','investigat','account','corrupt','transparen','audit','misconduct'],topic:'government accountability',dm:'City Council and Mayor'},
+    {keys:['wage','labor','worker','employ','salary','benefit','union','discrimin'],topic:'workers rights',dm:'Labor Board and City Council'},
+    {keys:['save','protect','preserv','histor','heritag','cultur','art','museum'],topic:'community preservation',dm:'City Council'},
+  ];
+  for (const r of rules){ if(r.keys.some(k=>j.includes(k))){topic=r.topic;dm=r.dm;break;} }
+  return {loc,topic,dm};
+}
+
+// Generates 14 steps following the 5-bucket structure from the AI Guidance Prompt:
+// Start strong (0-2) → Engage community & supporters (3-6) →
+// Decision maker engagement (7-9) → Public pressure & visibility (10-11) →
+// Delivery / impact / declare victory (12-13)
+function _genSteps(title, topic, dm, loc) {
+  const noun = _extractIssueNoun(title);
+  const city = loc.split(',')[0].trim();
+  const dmP  = dm.split(',')[0].split(' and ')[0].trim();
+
+  return [
+    // ── START STRONG ──────────────────────────────────────────────────
+    {
+      t: `Share your petition with ${city} contacts personally`,
+      c: `Text or email the petition to at least 20 people in ${city} who care about ${topic}. Ask each one to share with 2 others they know directly. Petitions that reach 100 signatures in the first two weeks are far more likely to get a decision-maker response or media attention — make this your first two-week target.`,
+      why: 'Personal shares convert 3× better than social posts — your existing network is your fastest path to the early volume that gets official attention.',
+      category: 'Start strong',
+    },
+    {
+      t: `Post in ${city} Facebook community groups`,
+      c: `Find and post in "${city} Community", "${city} Neighbors", and groups specifically related to ${topic}. Reshare every 2–3 days with fresh wording — don't post once and stop. Consistent visibility compounds over time.`,
+      why: 'Hyperlocal Facebook groups reach the people most directly affected by this issue, and repeated posts keep the petition in front of new eyes every few days.',
+      category: 'Start strong',
+    },
+    {
+      t: `Create a custom vanity link for your petition`,
+      c: `Set up a short, memorable link using Change.org's vanity URL tool. Add it to your email signature, your social bio, and share it verbally at community events. Then keep sharing it — every week, not just once.`,
+      why: 'A clean vanity link removes friction, looks more credible in print and in person, and makes it easy for any supporter to share verbally without looking it up.',
+      category: 'Start strong',
+    },
+    // ── ENGAGE COMMUNITY AND SUPPORTERS ──────────────────────────────
+    {
+      t: `Get ${city} residents to record video comments`,
+      c: `Reach out to people directly affected by ${topic} in ${city}. Ask them to leave a short video or written comment on the petition page: "How has this affected you personally?" Real stories create emotional proof that no statistic can match.`,
+      why: 'Video comments from affected community members are harder for decision makers to dismiss — and they drive reshares from people who see themselves in the story.',
+      category: 'Engage community and supporters',
+    },
+    {
+      t: `Send your first update to all signers`,
+      c: `Thank your signers by name, share the current signature count, and ask each one to forward the petition to just one more person in ${city} today. Keep the message short, personal, and specific about what you're asking for.`,
+      why: 'Signers who receive a personal thank-you update are 4× more likely to reshare — your existing supporters are your highest-converting channel at every stage.',
+      category: 'Engage community and supporters',
+    },
+    {
+      t: `Post a milestone update in ${city} Facebook groups`,
+      c: `When you hit a meaningful signature milestone, post in your most active ${city} Facebook groups: "We hit [X] signatures — help us reach [next goal]." Tag local news outlets and ask your supporters to reshare this specific post.`,
+      why: 'Public milestones signal real community momentum to both local press and decision makers — and asking for a reshare at this moment is your most effective mid-campaign call to action.',
+      category: 'Engage community and supporters',
+    },
+    {
+      t: `Ask your top supporters to share on Nextdoor in ${city}`,
+      c: `Identify your most engaged supporters and personally ask them to post the petition on Nextdoor neighborhoods across ${city}. Offer a short suggested post to make it easy — supporters are far more likely to share if you reduce the effort required.`,
+      why: 'Nextdoor reaches hyper-local residents who may not be active on Facebook but are deeply invested in what happens in their immediate neighborhood.',
+      category: 'Engage community and supporters',
+    },
+    // ── DECISION MAKER ENGAGEMENT ─────────────────────────────────────
+    {
+      t: `Contact ${dmP} directly`,
+      c: `Find the direct contact information for ${dm}. Send a specific, personal message with a concrete ask: what action do you want them to take, and by when? Request a written response or a meeting. Follow up within a week if you don't hear back.`,
+      why: 'A direct, specific ask with a named deadline creates a documented paper trail of accountability that a generic form submission cannot.',
+      category: 'Decision maker engagement',
+    },
+    {
+      t: `Submit a formal written comment about ${topic}`,
+      c: `Use the official website, public comment form, or physical mail to submit a formal written demand to ${dm}. Cite your petition's current signature count, name the affected ${city} residents, and list your specific asks clearly.`,
+      why: 'A formal written record is officially logged — it\'s far harder for decision makers to deny receiving or to ignore without public consequence.',
+      category: 'Decision maker engagement',
+    },
+    {
+      t: `Attend a public meeting and give official comment`,
+      c: `Find the next public meeting or hearing where ${dm} will be present. Prepare a focused 3-minute statement. Bring 2–3 ${city} residents to speak alongside you with their personal stories about how ${topic} has affected them.`,
+      why: 'In-person public comment creates a timestamped, official record that cannot be deleted — it forces formal acknowledgment on the record.',
+      category: 'Decision maker engagement',
+    },
+    // ── PUBLIC PRESSURE AND VISIBILITY ───────────────────────────────
+    {
+      t: `Pitch your story to local ${city} journalists`,
+      c: `Find reporters who cover ${topic} in ${city}. Lead your pitch with one compelling resident story — not statistics. Include 2–3 people willing to speak on record. Follow up once if you don't hear back within a few days.`,
+      why: 'One local news story can drive more signatures in 24 hours than weeks of organic social sharing — and it creates public pressure no official can dismiss.',
+      category: 'Public pressure and visibility',
+    },
+    {
+      t: `Distribute petition flyers with QR codes in ${city}`,
+      c: `Print and post flyers at community centers, faith institutions, local businesses, libraries, and public events throughout ${city}. Use Change.org's flyer tool to include a scannable QR code that links directly to the petition.`,
+      why: 'QR code flyers reach community members not active on social media — often the most directly affected voices, and the hardest to reach any other way.',
+      category: 'Public pressure and visibility',
+    },
+    // ── DELIVERY / IMPACT / DECLARE VICTORY ──────────────────────────
+    {
+      t: `Deliver your signatures at a public meeting`,
+      c: `Download your complete supporter list from Change.org and present it formally at a public meeting of ${dm}. Invite local ${city} media to the delivery moment. Bring a printed copy alongside the digital list for maximum visual impact.`,
+      why: 'A formal signature delivery creates a high-visibility accountability moment that officials must respond to on the official record — it turns your petition into a political event.',
+      category: 'Delivery / impact / declare victory',
+    },
+    {
+      t: `Issue a press release on delivery day`,
+      c: `Write and distribute a press release on the day you deliver signatures. Restate your core demands, quote affected ${city} residents, and send it to all local media contacts. Post it publicly across all your social channels simultaneously.`,
+      why: 'Same-day media coverage of your signature delivery maximizes the public cost of inaction — officials see the story and know their response is being watched in real time.',
+      category: 'Delivery / impact / declare victory',
+    },
+  ];
+}
+
+// Generates 4 typed signal alerts following the AI Guidance Prompt:
+// supporter_share, news_mention, signature_milestone, in_person_event
+function _genSignals(title, topic, dm, loc) {
+  const city = loc.split(',')[0].trim();
+  const dmP  = dm.split(',')[0].split(' and ')[0].trim();
+  return [
+    {
+      signal_type: 'supporter_share',
+      ico: '📱', lbl: 'Momentum Alert',
+      headline: `Your Facebook post is driving new signatures`,
+      getText: () => `Someone in a ${city} community Facebook group just shared your petition and brought in new signatures. This is the moment to post again in the same groups — momentum like this compounds fast when you jump on it right away.`,
+      cta: 'Share on Facebook now →', ctaColor: '#0d4dfb',
+      cta_action: 'open_sharing_tool',
+    },
+    {
+      signal_type: 'news_mention',
+      ico: '📰', lbl: 'News Mention',
+      headline: `A ${city} outlet just covered ${topic} — act now`,
+      getText: () => `A local ${city} news outlet just published a story on ${topic}. This is a rare opening — connect their reporter to your petition and the real ${city} residents behind it before the story cycle moves on.`,
+      cta: 'Reach out to media →', ctaColor: '#0d4dfb',
+      cta_action: 'open_decision_maker_tab',
+    },
+    {
+      signal_type: 'signature_milestone',
+      ico: '🎉', lbl: 'Milestone Reached',
+      headline: `${city} is showing up — thank your supporters`,
+      getText: () => `You just hit a real signature milestone — hundreds of ${city} residents have signed, and that number means something. Now is the perfect moment to send a thank-you update and ask signers to reshare before momentum fades.`,
+      cta: 'Send a supporter update →', ctaColor: '#e01a2b',
+      cta_action: 'open_post_update_tab',
+    },
+    {
+      signal_type: 'in_person_event',
+      ico: '📅', lbl: 'Upcoming Meeting',
+      headline: `${dmP} has a public meeting — put this on the record`,
+      getText: () => `${dm} has a public meeting coming up where you can give official comment on ${topic}. Show up with 2–3 ${city} residents, deliver a focused 3-minute statement, and put your demand on the official record where it cannot be ignored.`,
+      cta: 'Prepare for this meeting →', ctaColor: '#0d4dfb',
+      cta_action: 'show_event_details',
+    },
+  ];
+}
+
+function generatePetitionFromUrl(url) {
+  const m   = url.match(/\/p\/([^/?&#\s]+)/i);
+  const raw = m ? decodeURIComponent(m[1]) : url;
+  const words = raw.toLowerCase().replace(/[-_]+/g,' ').split(' ').filter(Boolean);
+  const title = _slugToTitle(raw);
+  const { loc, topic, dm } = _detectMeta(words);
+  const steps   = _genSteps(title, topic, dm, loc);
+  const signals = _genSignals(title, topic, dm, loc);
+  const sigs = 50 + Math.floor(raw.split('').reduce((a,c) => a+c.charCodeAt(0), 0) % 420);
+  const city = loc.split(',')[0].trim();
+  const roadmap = [
+    { name:'Spark',    tasks: steps.slice(0,3).map(s=>({t:s.t,d:s.c})) },
+    { name:'Build',    tasks: steps.slice(3,7).map(s=>({t:s.t,d:s.c})) },
+    { name:'Pressure', tasks: steps.slice(7,12).map(s=>({t:s.t,d:s.c})) },
+    { name:'Decision', tasks: [
+      ...steps.slice(12,14).map(s=>({t:s.t,d:s.c})),
+      { t:"Use Change.org's Declare Victory to document outcomes", d:'Document your outcome publicly — wins inspire others fighting the same issues.' },
+    ]},
+  ];
+  return {
+    match: [raw.toLowerCase()], title, topic, dm, loc, phase: 1,
+    sigs,
+    cmt:   Math.max(3, Math.floor(sigs*.04)),
+    prm:   Math.max(1, Math.floor(sigs*.015)),
+    views: Math.floor(sigs*6.2),
+    steps, signals, roadmap,
+    roadmapPhases: roadmap,
+    summaryTexts: [
+      `You're in Phase 1: Spark. Your goal: 100 signatures from ${city} in the first two weeks.`,
+      `You're in Phase 2: Build. Activate your signers and collect compelling ${topic} stories.`,
+      `You're in Phase 3: Pressure. Take your campaign directly to ${dm}.`,
+      `You're in Phase 4: Decision. Deliver your signatures and declare your position.`,
+    ],
+    initialActions: [
+      `Share the petition with 20 people in ${city} personally — text converts 3× better than social for the first push.`,
+      `Post in local ${city} Facebook groups today with a short personal note about why ${topic} matters to this community.`,
+      `Ask one person directly affected by ${topic} in ${city} to leave a video comment on the petition this week.`,
+    ],
+  };
+}
+
+const ONBOARDING_QUESTIONS = [
+  {
+    text: "What does winning look like for you?",
+    type: 'multichoice',
+    choices: ["A policy or law changes","A decision maker responds publicly","My community takes action","Raise awareness for my issue","Something else"],
+  },
+  {
+    text: "Why does this matter to you personally?",
+    type: 'text',
+    placeholder: "e.g. My family was directly affected, I've been fighting this for years...",
+    hint: "Your own words are the most powerful asset we have — I'll use this to write in your voice.",
+  },
+  {
+    text: "Which platforms do you use most?",
+    type: 'multichoice',
+    choices: ["Facebook","Instagram","X / Twitter","TikTok","Reddit","Nextdoor","WhatsApp","Email list","None of these"],
+  },
+  {
+    text: "How much time can you give this each week?",
+    type: 'choice',
+    choices: ["Less than 1 hour","1 to 3 hours","More than 3 hours"],
+  },
+  {
+    text: "Who do you most want to reach?",
+    type: 'choice',
+    choices: ["Local community","Elected officials","Media and press","All of the above"],
+  },
+  {
+    text: "What tactics sound most interesting to you?",
+    type: 'multichoice',
+    choices: ["Gather my community","Leverage social media","Get on the news","Attend or host events","Flyers and in-person outreach","Reach out directly to people","All of the above"],
+  },
+  {
+    text: "Last one — what feels hardest right now?",
+    type: 'text',
+    placeholder: "e.g. I don't know where to start, I don't have a big network...",
+  },
+];
+
+// Co-pilot reactions — petition-aware, keyed by question index + first selected answer
+function getObReaction(qIdx, answer) {
+  const p = state.petition;
+  const sigs = fmt(p.sigs);
+  const next = fmt(nextMilestone(p.sigs));
+
+  const reactions = [
+    // Q0 — winning looks like
+    {
+      "A policy or law changes":
+        `Perfect — I'll build your plan around sustained, documented pressure. That's the kind that sticks.`,
+      "A decision maker responds publicly":
+        `A public response is very achievable — it turns ${sigs} signatures into accountability on the record. That's a concrete win.`,
+      "My community takes action":
+        `Neighbors who've experienced this firsthand are your most powerful voice. I'll make community mobilization the foundation.`,
+      "Raise awareness for my issue":
+        `Awareness campaigns can compound fast. More visibility means pressure from more directions — I'll build toward that.`,
+      "Something else":
+        `Noted — I'll build your roadmap around that specifically, not a generic template.`,
+    },
+    // Q1 — personal connection (free text — handled in submitTextAnswer)
+    null,
+    // Q2 — platforms (handled in multichoice confirm)
+    null,
+    // Q3 — time
+    {
+      "Less than 1 hour":
+        `Tight schedule — I'll focus on the 2–3 moves with the highest leverage. No busywork.`,
+      "1 to 3 hours":
+        `That's plenty to run a real campaign. We'll pace it so every hour counts.`,
+      "More than 3 hours":
+        `With that time we can go multi-front — community, press, and direct pressure all at once.`,
+    },
+    // Q4 — who to reach
+    {
+      "Local community":
+        `People directly affected are your most credible voices. Local pressure moves faster than you'd expect.`,
+      "Elected officials":
+        `Officials respond to organized constituents making a documented public ask. We'll build toward exactly that.`,
+      "Media and press":
+        `Good call — one local story can move more signatures in 24 hours than weeks of organic sharing. I'll prioritize that.`,
+      "All of the above":
+        `Multi-front is the right move. I'll sequence it so pressure builds from every direction at once.`,
+    },
+    // Q5 — tactics (handled in multichoice confirm handler)
+    null,
+    // Q6 — hardest (free text — handled in submitTextAnswer)
+    null,
+  ];
+
+  const map = reactions[qIdx];
+  if (!map) return null;
+  return map[answer] || null;
+}
+
+const SIGNAL_MESSAGES = [
+  {
+    text: (p) => `You just hit ${fmt(nextMilestone(state.sigs - 1))} signatures — that's a big deal. Your supporters are ready to hear from you. Want me to draft an update?`,
+    qr: ["Yes, draft it","I'll do it later"],
+    signal: true,
+  },
+  {
+    text: (p) => `Your topic is getting attention in the news right now — a story about ${p.topic} in ${p.loc} was just published. This is a good moment to share. Want some help?`,
+    qr: ["Show me how","Not right now"],
+    signal: true,
+  },
+  {
+    text: (p) => `I found a public hearing related to ${p.topic} on ${futureDate()}. It could be worth showing up or reaching out in advance. Want details?`,
+    qr: ["Tell me about the event","Skip this"],
+    signal: true,
+  },
+];
+
+const MILESTONES = [1,5,10,20,50,100,500,1000,2500,5000,10000,50000,100000,500000,1000000];
+function nextMilestone(n) { for (const m of MILESTONES) if (m > n) return m; return MILESTONES[MILESTONES.length-1]; }
+function prevMilestone(n) { let p=0; for (const m of MILESTONES) { if (m>=n) return p; p=m; } return p; }
+function fmt(n) { if (n>=1000000) return (n/1000000).toFixed(n%1000000===0?0:1)+'M'; return n.toLocaleString(); }
+
+// Petition data helpers — normalize between {steps} and {roadmap} formats
+function getPetitionSteps(p) {
+  if (p.steps && p.steps.length) return p.steps;
+  // Derive from roadmap: [{name, tasks:[{t,d}]}] → [{t,c}]
+  if (p.roadmap) return p.roadmap.flatMap(ph => ph.tasks.map(task => ({t:task.t, c:task.d})));
+  return [];
+}
+function getPetitionPhases(p) {
+  if (p.roadmapPhases && p.roadmapPhases.length) return p.roadmapPhases;
+  return p.roadmap || [];
+}
+function futureDate() { const d=new Date(); d.setDate(d.getDate()+9); return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+function guessPetition(url) { const s=url.toLowerCase(); for (const p of PETITIONS) { if (p.match.some(k=>s.includes(k))) return p; } return generatePetitionFromUrl(url); }
+
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+let state = {
+  petition:null, answers:[], obStep:0, obTypingTimer:null,
+  sigs:0, phase:1, chatMsgs:[], demoOpen:false, currentScreen:'url',
+  platforms:[], tactics:[], personalConnection:'', focusIdx:0, done:[], welcomeShown:false,
+};
+
+/* ═══════════════════════════════════════════════
+   SCREEN ROUTING
+═══════════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  state.currentScreen = id;
+  const showNav = (id === 'home' || id === 'roadmap');
+  document.getElementById('bottom-nav').style.display      = showNav ? 'flex' : 'none';
+  document.getElementById('chat-fab-wrap').style.display   = showNav ? 'block' : 'none';
+  // demo-controls stays fixed at top always — no show/hide
+}
+
+function showHome()    { showScreen('home'); }
+function showRoadmap() { renderRoadmap(); showScreen('roadmap'); }
+
+/* ═══════════════════════════════════════════════
+   URL / PARSING
+═══════════════════════════════════════════════ */
+/* ─── PETITION SLUGS (add one per research participant before each session) ─── */
+const SLUGS = {
+  'lake-bonny': 'https://www.change.org/p/petition-for-an-independent-investigation-into-the-lake-bonny-flooding-and-related-matters',
+  // 'p1': 'https://www.change.org/p/...',
+  // 'p2': 'https://www.change.org/p/...',
+};
+
+const LS_KEY = 'co_pilot_petition';
+function savePetition(url, title) { try { localStorage.setItem(LS_KEY, JSON.stringify({url,title})); } catch(e) {} }
+function loadSaved() { try { return JSON.parse(localStorage.getItem(LS_KEY)||'null'); } catch(e) { return null; } }
+function clearSaved() { localStorage.removeItem(LS_KEY); document.getElementById('saved-card').classList.add('hidden'); document.getElementById('url-hint-row').style.display=''; }
+
+const LS_OB_KEY = 'co_pilot_onboarding';
+function saveOnboarding() {
+  try { localStorage.setItem(LS_OB_KEY, JSON.stringify({answers:state.answers, platforms:state.platforms, tactics:state.tactics, personalConnection:state.personalConnection})); } catch(e) {}
+}
+function loadOnboarding() { try { return JSON.parse(localStorage.getItem(LS_OB_KEY)||'null'); } catch(e) { return null; } }
+function clearOnboarding() { localStorage.removeItem(LS_OB_KEY); }
+function continueWithSaved() { const s=loadSaved(); if(s) startParsing(s.url); }
+
+function handleUrl() {
+  const v = document.getElementById('petition-url').value.trim();
+  if (!v) { const el=document.getElementById('petition-url'); el.classList.add('err'); setTimeout(()=>el.classList.remove('err'),900); return; }
+  startParsing(v);
+}
+
+function loadDemo() { startParsing(SLUGS['lake-bonny']); }
+
+document.getElementById('petition-url').addEventListener('keydown', e => { if (e.key==='Enter') handleUrl(); });
+
+/* ─── AUTO-LOAD on page start ─── */
+(function autoInit() {
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('p'), raw = params.get('url');
+  if (slug && SLUGS[slug]) { startParsing(SLUGS[slug]); return; }
+  if (raw) { startParsing(decodeURIComponent(raw)); return; }
+  const saved = loadSaved();
+  if (saved) { startParsing(saved.url); return; }
+  startParsing(SLUGS['lake-bonny']);
+})();
+
+// Fetches real petition metadata (image, sigs, comments) via Vercel serverless function
+async function fetchPetitionMeta(url) {
+  try {
+    if (!url.includes('change.org')) return {};
+    const endpoint = '/api/petition-meta?url=' + encodeURIComponent(url);
+    const res = await fetch(endpoint);
+    if (!res.ok) return {};
+    return await res.json();
+  } catch(e) {
+    return {};
+  }
+}
+
+function _applyMeta(meta) {
+  if (!meta || !state.petition) return;
+  if (meta.img)   state.petition.img   = meta.img;
+  if (meta.sigs)  { state.petition.sigs = meta.sigs; state.sigs = meta.sigs; }
+  if (meta.cmt)   state.petition.cmt   = meta.cmt;
+  if (meta.title) state.petition.title = meta.title;
+}
+
+function startParsing(url) {
+  showScreen('url'); // keep url hidden
+  document.getElementById('screen-url').classList.remove('active');
+  document.getElementById('overlay-parse').classList.remove('hidden');
+  const msgs = [
+    'Reading petition content',
+    'Identifying your decision maker',
+    'Scanning 50,000+ similar campaigns',
+    'Analyzing local political landscape',
+    'Mapping your supporter network',
+    'Scoring signal opportunities',
+    'Calibrating your victory path',
+    'Generating personalized action steps',
+    'Finalizing your roadmap',
+  ];
+  let i=0;
+  let metaResult = null;
+  fetchPetitionMeta(url).then(m => { metaResult = m; });
+
+  const iv = setInterval(()=>{
+    i++;
+    if (i < msgs.length) { document.getElementById('parse-status').textContent = msgs[i]+'...'; }
+    else {
+      clearInterval(iv);
+      state.petition = guessPetition(url);
+      _applyMeta(metaResult);
+      state.sigs = state.petition.sigs;
+      state.phase = state.petition.phase || 1;
+      savePetition(url, state.petition.title);
+      setTimeout(()=>{ document.getElementById('overlay-parse').classList.add('hidden'); startOnboarding(); }, 400);
+    }
+  }, 1100);
+}
+
+/* ═══════════════════════════════════════════════
+   ONBOARDING CHATBOT
+═══════════════════════════════════════════════ */
+function startOnboarding() {
+  // If already completed before, skip straight to home
+  const saved = loadOnboarding();
+  if (saved) {
+    state.answers           = saved.answers           || [];
+    state.platforms         = saved.platforms         || [];
+    state.tactics           = saved.tactics           || [];
+    state.personalConnection = saved.personalConnection || '';
+    skipToBuild();
+    return;
+  }
+
+  state.obStep = 0;
+  state.answers = [];
+  const obAv = document.getElementById('ob-avatar-el');
+  const cpAv = document.getElementById('cp-avatar-el');
+  if (obAv) obAv.innerHTML = C_LOGO;
+  if (cpAv) cpAv.innerHTML = C_LOGO;
+
+  document.getElementById('ob-messages').innerHTML = '';
+  renderObPips();
+  showScreen('onboard');
+
+  const p = state.petition;
+  const openingMsg = `Hi — I've read your petition on <strong>${p.topic}</strong> in ${p.loc}. I understand your ask, and I can see a clear path to getting <strong>${p.dm}</strong> to respond. I'm here to help you build a plan to succeed — but first, a few quick questions so I can make it specific to you.`;
+
+  setTimeout(()=>addObCopilotMsg(openingMsg, ()=>{
+    setTimeout(()=>showObQuestion(0), 400);
+  }), 300);
+}
+
+function skipToBuild() {
+  // Replay the build animation quickly and go straight to home
+  document.getElementById('overlay-build').classList.remove('hidden');
+  const ids = ['bi1','bi2','bi3','bi4'];
+  let i = 0;
+  const iv = setInterval(()=>{
+    if (i > 0) { const prev = document.getElementById(ids[i-1]); if (prev) { prev.classList.remove('on'); prev.classList.add('done'); } }
+    if (i < ids.length) { const cur = document.getElementById(ids[i]); if (cur) cur.classList.add('on'); i++; }
+    else { clearInterval(iv); setTimeout(()=>{ document.getElementById('overlay-build').classList.add('hidden'); personalizeStepsToUser(); buildHomeAndShow(); }, 200); }
+  }, 150); // fast — user has seen this before
+}
+
+function renderObPips() {
+  const el = document.getElementById('ob-pips');
+  el.innerHTML = '';
+  ONBOARDING_QUESTIONS.forEach((_,i)=>{
+    const d = document.createElement('div');
+    d.className = 'ob-pip' + (i < state.obStep ? ' filled' : '');
+    el.appendChild(d);
+  });
+}
+
+function addObCopilotMsg(text, cb) {
+  const msgs = document.getElementById('ob-messages');
+  // typing indicator
+  const typing = document.createElement('div');
+  typing.className = 'bubble-row';
+  typing.innerHTML = `<div class="bubble-avatar">${C_LOGO}</div><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  msgs.appendChild(typing);
+  scrollObBottom();
+  setTimeout(()=>{
+    typing.remove();
+    const row = document.createElement('div');
+    row.className = 'bubble-row';
+    row.innerHTML = `<div class="bubble-avatar">${C_LOGO}</div><div class="bubble left"><div class="bubble-name">Co-Pilot</div>${text}</div>`;
+    msgs.appendChild(row);
+    scrollObBottom();
+    if (cb) cb();
+  }, 900);
+}
+
+function showObQuestion(idx) {
+  if (idx >= ONBOARDING_QUESTIONS.length) { finishOnboarding(); return; }
+  state.obStep = idx;
+  renderObPips();
+  const q = ONBOARDING_QUESTIONS[idx];
+
+  // Build message — add hint line for text questions that have one
+  const msgText = q.hint
+    ? `${q.text}<br><span style="font-size:.8125rem;color:#6b7280;font-style:italic;margin-top:.25rem;display:block">${q.hint}</span>`
+    : q.text;
+
+  addObCopilotMsg(msgText, ()=>{
+    const msgs = document.getElementById('ob-messages');
+    if (q.type === 'choice' || q.type === 'multichoice') {
+      const isMulti = q.type === 'multichoice';
+      const selected = new Set();
+
+      const row = document.createElement('div');
+      row.className = 'qr-row';
+      row.style.paddingLeft = '0';
+      row.style.justifyContent = 'flex-end';
+
+      q.choices.forEach(c=>{
+        const btn = document.createElement('button');
+        btn.className = 'qr-chip';
+        btn.textContent = c;
+        btn.onclick = ()=>{
+          if (isMulti) {
+            if (selected.has(c)) {
+              selected.delete(c);
+              btn.classList.remove('used');
+              // Hide "Something else" input if deselected
+              if (c === 'Something else') {
+                const wrap = row.querySelector('.else-wrap');
+                if (wrap) { wrap.style.display = 'none'; }
+              }
+            } else {
+              selected.add(c);
+              btn.classList.add('used');
+              // "Something else" — reveal inline text + voice input
+              if (c === 'Something else') {
+                let wrap = row.querySelector('.else-wrap');
+                if (!wrap) {
+                  wrap = document.createElement('div');
+                  wrap.className = 'else-wrap';
+                  wrap.style.cssText = 'width:100%;display:flex;gap:.375rem;align-items:center;margin-top:.375rem;';
+                  wrap.innerHTML = `
+                    <input type="text" class="chat-field else-field" placeholder="Describe what winning means for you..." style="flex:1;font-size:.875rem;padding:.5rem .75rem;border-radius:10px">
+                    <button class="mic-btn else-mic-btn" onclick="toggleElseVoice(this)" title="Voice input" style="flex-shrink:0">🎤</button>
+                  `;
+                  // Insert before the confirm button or append
+                  const confirm = row.querySelector('.ob-confirm-btn');
+                  confirm ? row.insertBefore(wrap, confirm) : row.appendChild(wrap);
+                } else {
+                  wrap.style.display = 'flex';
+                }
+                setTimeout(()=>wrap.querySelector('.else-field').focus(), 80);
+              }
+            }
+
+            // Ensure confirm button exists once anything is selected
+            let confirmBtn = row.querySelector('.ob-confirm-btn');
+            if (!confirmBtn && selected.size > 0) {
+              confirmBtn = document.createElement('button');
+              confirmBtn.className = 'qr-chip ob-confirm-btn';
+              confirmBtn.style.cssText = 'background:var(--action);color:#0f172a;border-color:var(--action);font-weight:700;margin-top:.25rem;width:100%;justify-content:center;';
+              confirmBtn.textContent = 'Done →';
+              confirmBtn.onclick = ()=>{
+                if (selected.size === 0) return;
+                // Build answer — replace "Something else" with their typed text if provided
+                const elseField = row.querySelector('.else-field');
+                const elseText = elseField ? elseField.value.trim() : '';
+                const parts = Array.from(selected).map(s =>
+                  s === 'Something else' && elseText ? `${elseText}` : s
+                );
+                const val = parts.join(', ');
+                row.querySelectorAll('.qr-chip, input, button').forEach(b=>{ b.disabled=true; b.style.opacity=.5; });
+                addObUserMsg(val);
+                state.answers.push(val);
+
+                // Store platforms or tactics depending on question
+                if (state.obStep === 2) {
+                  state.platforms = Array.from(selected).filter(s => s !== 'None of these');
+                  const platformMsg = state.platforms.length === 0
+                    ? `No problem — I'll focus your plan on email and in-person outreach instead.`
+                    : state.platforms.length === 1
+                    ? `${state.platforms[0]} is a great place to start — I'll build your sharing steps around that.`
+                    : `Got it — I'll tailor your sharing steps across ${state.platforms.slice(0,-1).join(', ')} and ${state.platforms.slice(-1)}.`;
+                  setTimeout(()=>addObCopilotMsg(platformMsg, ()=>setTimeout(()=>showObQuestion(state.obStep+1), 300)), 500);
+                } else if (state.obStep === 5) {
+                  const allSelected = Array.from(selected);
+                  state.tactics = allSelected.includes('All of the above')
+                    ? ['Gather my community','Leverage social media','Get on the news','Attend or host events','Flyers and in-person outreach','Reach out directly to people']
+                    : allSelected;
+                  const p = state.petition;
+                  const tacticMsg = state.tactics.length <= 2
+                    ? `Focused approach — I'll sequence your roadmap around ${state.tactics.join(' and ').toLowerCase()} and make sure every step reflects that.`
+                    : `I'll sequence your roadmap so all of these reinforce each other — each tactic building on the last.`;
+                  setTimeout(()=>addObCopilotMsg(tacticMsg, ()=>setTimeout(()=>showObQuestion(state.obStep+1), 300)), 500);
+                } else {
+                  // Q0 win goals — react based on selections
+                  const reaction = getObReaction(state.obStep, Array.from(selected)[0]);
+                  if (reaction) {
+                    setTimeout(()=>addObCopilotMsg(reaction, ()=>setTimeout(()=>showObQuestion(state.obStep+1), 300)), 500);
+                  } else {
+                    setTimeout(()=>showObQuestion(state.obStep+1), 650);
+                  }
+                }
+              };
+              row.appendChild(confirmBtn);
+            }
+          } else {
+            if (btn.classList.contains('used')) return;
+            selectObChoice(c, row, btn);
+          }
+        };
+        row.appendChild(btn);
+      });
+      msgs.appendChild(row);
+      scrollObBottom();
+    } else {
+      // text input + optional voice
+      const input = document.getElementById('ob-text-input');
+      const send  = document.getElementById('ob-send-btn');
+      const mic   = document.getElementById('ob-mic-btn');
+      input.style.display = 'flex';
+      send.style.display  = 'flex';
+      // Show mic only if SpeechRecognition is supported
+      if (mic) mic.style.display = (window.SpeechRecognition || window.webkitSpeechRecognition) ? 'flex' : 'none';
+      input.placeholder = q.placeholder || 'Type your answer...';
+      input.value = '';
+      input.disabled = false;
+      send.disabled = true;
+      input.oninput = ()=>{ send.disabled = input.value.trim().length===0; };
+      input.focus();
+    }
+  });
+}
+
+function selectObChoice(choice, row, clickedBtn) {
+  row.querySelectorAll('.qr-chip').forEach(b=>{ b.disabled=true; b.style.opacity='.45'; });
+  if (clickedBtn) { clickedBtn.classList.add('used'); clickedBtn.style.opacity='1'; }
+  addObUserMsg(choice);
+  state.answers.push(choice);
+
+  // Reactive co-pilot response before next question
+  const reaction = getObReaction(state.obStep, choice);
+  if (reaction) {
+    setTimeout(()=>addObCopilotMsg(reaction, ()=>setTimeout(()=>showObQuestion(state.obStep+1), 350)), 450);
+  } else {
+    setTimeout(()=>showObQuestion(state.obStep+1), 650);
+  }
+}
+
+function submitTextAnswer() {
+  const input = document.getElementById('ob-text-input');
+  const val = input.value.trim();
+  if (!val) return;
+  input.disabled = true;
+  document.getElementById('ob-send-btn').disabled = true;
+  addObUserMsg(val);
+  state.answers.push(val);
+  input.style.display = 'none';
+  document.getElementById('ob-send-btn').style.display = 'none';
+  const _obMic = document.getElementById('ob-mic-btn'); if (_obMic) { _obMic.style.display = 'none'; stopObVoice(); }
+
+  const qIdx = state.obStep;
+  const isLast = (qIdx === ONBOARDING_QUESTIONS.length - 1);
+
+  // Reactive response for text questions
+  let reaction;
+  if (qIdx === 1) {
+    // Personal connection — most important, warmest + petition-specific
+    state.personalConnection = val;
+    reaction = `That's the kind of firsthand connection that makes this impossible to ignore — I'll use your own words when we write posts and outreach.`;
+  } else if (isLast) {
+    reaction = `That's one of the most common blockers — and it's exactly what I'm here for. Your plan will address that directly.`;
+  }
+
+  if (reaction) {
+    setTimeout(()=>addObCopilotMsg(reaction, ()=>{
+      setTimeout(()=>{ isLast ? finishOnboarding() : showObQuestion(qIdx+1); }, 400);
+    }), 500);
+  } else {
+    setTimeout(()=>{ isLast ? finishOnboarding() : showObQuestion(qIdx+1); }, 650);
+  }
+}
+
+function addObUserMsg(text) {
+  const msgs = document.getElementById('ob-messages');
+  const row = document.createElement('div');
+  row.className = 'bubble-row right';
+  row.innerHTML = `<div class="bubble right">${text}</div>`;
+  msgs.appendChild(row);
+  scrollObBottom();
+}
+
+function scrollObBottom() {
+  const el = document.getElementById('ob-messages');
+  requestAnimationFrame(()=>{ el.scrollTop = el.scrollHeight; });
+}
+
+// Adapts generated steps to match what the user told us about their platforms and tactics
+function personalizeStepsToUser() {
+  const p = state.petition;
+  if (!p || !p.steps) return;
+
+  // Platform substitution — replace default social platform names with ones the user actually uses
+  const socialPlatforms = ['Facebook','Instagram','X / Twitter','TikTok','Reddit','Nextdoor','WhatsApp'];
+  const userSocial = (state.platforms || []).filter(pl => socialPlatforms.includes(pl));
+
+  if (userSocial.length > 0 && !userSocial.includes('Facebook')) {
+    const primarySocial = userSocial[0];
+    p.steps = p.steps.map(s => ({
+      ...s,
+      t: s.t.replace(/\bFacebook\b/g, primarySocial),
+      c: s.c.replace(/\bFacebook\b/g, primarySocial),
+    }));
+    if (p.roadmap) {
+      p.roadmap = p.roadmap.map(phase => ({
+        ...phase,
+        tasks: phase.tasks.map(task => ({
+          ...task,
+          t: task.t.replace(/\bFacebook\b/g, primarySocial),
+          d: task.d.replace(/\bFacebook\b/g, primarySocial),
+        })),
+      }));
+    }
+  }
+
+  const secondarySocial = userSocial.find(pl => pl !== (userSocial[0] || 'Nextdoor'));
+  if (secondarySocial && !userSocial.includes('Nextdoor')) {
+    const sub = secondarySocial;
+    p.steps = p.steps.map(s => ({
+      ...s,
+      t: s.t.replace(/\bNextdoor\b/g, sub),
+      c: s.c.replace(/\bNextdoor\b/g, sub),
+    }));
+    if (p.roadmap) {
+      p.roadmap = p.roadmap.map(phase => ({
+        ...phase,
+        tasks: phase.tasks.map(task => ({
+          ...task,
+          t: task.t.replace(/\bNextdoor\b/g, sub),
+          d: task.d.replace(/\bNextdoor\b/g, sub),
+        })),
+      }));
+    }
+  }
+}
+
+function finishOnboarding() {
+  saveOnboarding(); // remember answers so user never has to repeat this
+  addObCopilotMsg("Got it. Building your plan now...", ()=>{
+    document.getElementById('overlay-build').classList.remove('hidden');
+    const ids = ['bi1','bi2','bi3','bi4'];
+    let i = 0;
+    const iv = setInterval(()=>{
+      // Use remove+add instead of replace — broader browser support
+      if (i > 0) {
+        const prev = document.getElementById(ids[i-1]);
+        if (prev) { prev.classList.remove('on'); prev.classList.add('done'); }
+      }
+      if (i < ids.length) {
+        const cur = document.getElementById(ids[i]);
+        if (cur) cur.classList.add('on');
+        i++;
+      } else {
+        clearInterval(iv);
+        setTimeout(()=>{
+          document.getElementById('overlay-build').classList.add('hidden');
+          personalizeStepsToUser();
+          buildHomeAndShow();
+        }, 350);
+      }
+    }, 420);
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   HOME SCREEN
+═══════════════════════════════════════════════ */
+function buildHomeAndShow() {
+  // Always show home screen — wrap setup in try/catch so a bad petition
+  // property never leaves the user stuck on the build overlay
+  try {
+    const p = state.petition;
+    const phaseNames = ['Spark','Build','Pressure','Decision'];
+
+    document.getElementById('home-title').textContent = p.title || '—';
+    setCampaignImg(p);
+    updateDial();
+
+    state.focusIdx = 0;
+    state.done     = [];
+
+    // Populate comments and promotions modules
+    const cmt = p.cmt || 0, prm = p.prm || 0;
+    const cmtCountEl = document.getElementById('cmt-badge');
+    const prmCountEl = document.getElementById('prm-badge');
+    if (cmtCountEl) cmtCountEl.textContent = cmt > 0 ? String(cmt) : '';
+    if (prmCountEl) prmCountEl.textContent = prm > 0 ? String(prm) : '';
+
+    const cmtItems = document.getElementById('cmt-items');
+    const prmItems = document.getElementById('prm-items');
+
+    // Change.org C logo for promoted promos
+    const changeLogo = '<svg viewBox="0 0 67 67" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><path d="M67.0001 9.39759C66.9989 6.90481 66.0079 4.5145 64.2449 2.75224C62.4818 0.989966 60.0911 0 57.5983 0H9.40178C6.909 0 4.51826 0.989966 2.7552 2.75224C0.992144 4.5145 0.00111161 6.90481 0 9.39759V57.5932C0 60.0896 0.992144 62.4855 2.7552 64.2445C4.51826 66.0035 6.909 67 9.40178 67H57.5983C60.0911 67 62.4818 66.0035 64.2449 64.2445C66.0079 62.4855 66.9989 60.0896 67.0001 57.5932V9.39759ZM30.2662 43.2164C31.3857 43.214 32.4707 42.8282 33.3405 42.1233C34.2102 41.4184 34.8124 40.4369 35.0466 39.3421C35.0508 39.3237 35.1195 39.0071 35.1438 38.8673C35.1888 38.6492 35.308 38.4536 35.4809 38.3134C35.6539 38.1733 35.87 38.0973 36.0927 38.0984H43.0749C43.3388 38.1039 43.5899 38.2135 43.7734 38.4033C43.9175 38.5533 44.0061 38.748 44.0246 38.9552C44.0246 39.0013 44.0129 39.4577 44.0079 39.5197C43.8454 42.7206 42.7592 45.2892 41.0255 47.2046C40.0244 48.2973 38.8241 49.189 37.4888 49.8318C35.4017 50.8594 32.9612 51.3879 30.3013 51.3879C22.6215 51.3879 16.5546 47.0597 16.5546 38.678V28.7611C16.5546 20.4004 22.572 16.073 30.2285 16.0521H30.2729C37.8707 16.0521 43.899 20.2882 44.0305 28.4898V28.5828C44.0308 28.6986 44.0082 28.8133 43.9641 28.9203C43.92 29.0274 43.8552 29.1247 43.7734 29.2067C43.7121 29.2627 43.6437 29.3103 43.5699 29.3482C43.4184 29.4317 43.2479 29.4747 43.0749 29.473H36.1044C35.9377 29.4731 35.7739 29.4301 35.6287 29.3482C35.5099 29.2877 35.4063 29.2012 35.3254 29.0953C35.2445 28.9893 35.1884 28.8665 35.1614 28.736C35.1454 28.6523 35.127 28.5685 35.1086 28.4848C35.0408 28.1498 34.9595 27.8215 34.864 27.5074C34.4673 26.4269 33.7034 25.5202 32.7058 24.9459C31.7082 24.3717 30.5405 24.1664 29.4069 24.366C28.2733 24.5656 27.2459 25.1574 26.5044 26.0378C25.763 26.9183 25.3547 28.0314 25.3509 29.1824V38.2308C25.3484 40.9359 27.5619 43.2223 30.2662 43.2164ZM51.8494 51.3879C49.0572 51.3879 46.9492 49.0923 46.9492 46.3026C46.9492 43.6954 49.0572 41.5288 51.7874 41.5288C54.5796 41.5288 56.6885 43.698 56.6885 46.3026C56.691 49.0303 54.8309 51.3879 51.8494 51.3879Z" fill="#F34E49"/></svg>';
+
+    const sampleComments = [
+      { name:'Anita R.', time:'2 days ago', text:`This needs to happen. Our ${p.loc} community deserves accountability and real action on ${p.topic}.` },
+      { name:'Brian T.', time:'4 days ago', text:`I've been directly affected by this. Thank you for taking a stand on ${p.topic} — we deserve real answers from ${p.dm}.`, photo:'https://i.pravatar.cc/48?img=12' },
+      { name:'Sandra L.', time:'1 week ago', text:`Sharing with everyone I know in ${p.loc}. This is exactly what our community has been waiting for.` },
+    ];
+    const promoSigs = Math.max(8, Math.floor(p.sigs * 0.1));
+    const promoViews = promoSigs * 12;
+    const fbSigs = Math.max(5, Math.floor(p.sigs * 0.05));
+    const samplePromos = [
+      { isChangOrg: true,  source: 'Change.org Promoted', supporter: null, spend: '$12', sigs: promoSigs, views: promoViews, vps: '12 views / sig' },
+      { isChangOrg: false, source: 'Facebook', supporter: 'Marcus W.', photo: 'https://i.pravatar.cc/48?img=7', spend: null, sigs: fbSigs, views: fbSigs * 9, vps: '9 views / sig' },
+    ];
+
+    if (cmtItems) {
+      cmtItems.innerHTML = '';
+      if (cmt === 0) {
+        cmtItems.innerHTML = '<div class="activity-empty">No comments yet — be the first to add your voice.</div>';
+      } else {
+        sampleComments.slice(0, Math.min(3, cmt)).forEach(c => {
+          const avatarEl = c.photo
+            ? '<img src="' + c.photo + '" style="width:2rem;height:2rem;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="">'
+            : '<div class="comment-avatar">' + c.name.charAt(0) + '</div>';
+          cmtItems.innerHTML +=
+            '<div class="comment-card">' +
+              '<div class="comment-card-top">' +
+                avatarEl +
+                '<div><span class="comment-name">' + c.name + '</span>' +
+                '<span class="comment-time"> · ' + c.time + '</span></div>' +
+              '</div>' +
+              '<div class="comment-body">"' + c.text + '"</div>' +
+            '</div>';
+        });
+      }
+    }
+    if (prmItems) {
+      prmItems.innerHTML = '';
+      if (prm === 0) {
+        prmItems.innerHTML = '<div class="activity-empty">No promotions yet — share your petition to get started.</div>';
+      } else {
+        samplePromos.slice(0, Math.min(2, prm)).forEach(s => {
+          let iconEl;
+          if (s.isChangOrg) {
+            iconEl = '<div class="promo-platform-ico" style="background:none;overflow:hidden;">' + changeLogo + '</div>';
+          } else if (s.photo) {
+            iconEl = '<img src="' + s.photo + '" style="width:2.25rem;height:2.25rem;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="">';
+          } else {
+            iconEl = '<div class="promo-platform-ico">📘</div>';
+          }
+          const nameHtml = s.supporter
+            ? '<span class="promo-source">' + s.supporter + '</span>'
+            : '<span class="promo-source">' + s.source + '</span>';
+          const spendHtml = s.spend ? '<span class="promo-spend">' + s.spend + ' spent</span> · ' : '';
+          prmItems.innerHTML +=
+            '<div class="promo-card">' +
+              iconEl +
+              '<div class="promo-info">' +
+                '<div style="margin-bottom:.1875rem;">' + nameHtml + '</div>' +
+                '<div class="promo-meta">' + spendHtml + s.sigs + ' new signatures · ' + s.views + ' views</div>' +
+              '</div>' +
+            '</div>';
+        });
+      }
+    }
+
+    state.chatMsgs = [];
+    document.getElementById('cp-messages').innerHTML = '';
+    state.welcomeShown = true; // mark shown before openChat() fires so runWelcomeSequence doesn't duplicate
+
+    // Seed chat with immediate content — panel is never blank
+    const _p = p;
+    const _steps = getPetitionSteps(_p);
+    const _first = _steps.find((_,i) => !state.done.includes(i)) || _steps[0];
+    const _voice = state.personalConnection ? " I'll write in your voice." : '';
+
+    // Immediate welcome (no typewriter yet — just ensure content exists)
+    addChatMsg('copilot',
+      'Your Campaign Co-Pilot is live.' + (_voice ? ' I\'ll write in your voice.' : '') +
+      '<br><br>Every day I\'ll surface the single most important action to take — with a draft ready to go. Check back here whenever you want to know what to do next.',
+      []
+    );
+
+    // Immediately show next task card if we have steps
+    if (_first) {
+      setTimeout(() => {
+        addInlineCopilotMsg(buildActionCard(_first, 'Today\'s most important action'));
+      }, 200);
+    }
+  } catch(err) {
+    console.error('[Co-Pilot] buildHomeAndShow error:', err);
+    // Fallback: ensure chat always has at least a welcome message
+    try {
+      const msgs = document.getElementById('cp-messages');
+      if (msgs && msgs.children.length === 0) {
+        addChatMsg('copilot', 'Welcome! I\'m your Campaign Co-Pilot. How can I help?', ['See next task','Draft something']);
+        state.welcomeShown = true;
+      }
+    } catch(e2) {}
+  }
+
+  // Always run these — home screen must appear
+  setupVoice();
+  showScreen('home');
+  tickClock();
+  // Open chat panel so co-pilot introduces itself on arrival
+  setTimeout(()=>openChat(), 400);
+}
+
+/* ─── Focus task card (elements not present on home screen — no-op) ─── */
+function renderFocusCard() {
+  const focusEl = document.getElementById('focus-eyebrow');
+  if (!focusEl) return; // focus card not present on this screen
+  const steps = getPetitionSteps(state.petition);
+  const idx = steps.findIndex((_,i) => !state.done.includes(i));
+  if (idx === -1) {
+    focusEl.textContent = 'Phase complete';
+    document.getElementById('focus-title').textContent = 'All steps done — great work!';
+    document.getElementById('focus-context').textContent = "Time to advance to the next phase or declare victory.";
+    return;
+  }
+  state.focusIdx = idx;
+  const step = steps[idx];
+  focusEl.textContent = 'Next step';
+  document.getElementById('focus-title').textContent = step.t;
+  document.getElementById('focus-context').textContent = step.c.split(/\.\s/)[0] + '.';
+  document.getElementById('focus-detail-text').textContent = step.c;
+  document.getElementById('focus-expanded').classList.remove('open');
+  document.getElementById('focus-toggle-btn').textContent = 'See details ↓';
+}
+
+function toggleFocusDetails() {
+  const exp = document.getElementById('focus-expanded');
+  const btn = document.getElementById('focus-toggle-btn');
+  if (!exp || !btn) return;
+  const open = exp.classList.toggle('open');
+  btn.textContent = open ? 'Hide details ↑' : 'See details ↓';
+}
+
+function focusCTAClick() { askAboutFocus(); }
+
+function askAboutFocus() {
+  const step = getPetitionSteps(state.petition)[state.focusIdx];
+  if (!step) return;
+  openChat();
+  setTimeout(() => {
+    addChatMsg('user', `Tell me more about: ${step.t}`);
+    setTimeout(() => {
+      const p = state.petition;
+      addChatMsg('copilot', `Here's what I'd focus on: ${step.c} For a <strong>${p.topic}</strong> campaign in ${p.loc}, this step matters because early personal outreach consistently outperforms broadcast sharing by 3x. Want me to help you draft a message to send right now?`, ['Yes, draft it','Give me more context']);
+    }, 800);
+  }, 250);
+}
+
+function markFocusDone() {
+  if (!state.done.includes(state.focusIdx)) state.done.push(state.focusIdx);
+  const steps = getPetitionSteps(state.petition);
+  const nextIdx = steps.findIndex((_,i) => !state.done.includes(i));
+  if (nextIdx !== -1) state.focusIdx = nextIdx;
+  addChatMsg('copilot', "Done — nice work! I've moved you to the next step. Keep that momentum going. 🎯");
+  if (!chatOpen) addBadge();
+}
+
+/* ─── All tasks list (elements not present on home screen — no-op) ─── */
+function renderAllTasks() {
+  const countEl = document.getElementById('all-tasks-count');
+  if (!countEl) return; // all-tasks panel not present on this screen
+  const steps = getPetitionSteps(state.petition);
+  const remaining = steps.filter((_,i) => !state.done.includes(i)).length;
+  countEl.textContent = ` · ${remaining} remaining`;
+
+  const el = document.getElementById('all-tasks-list');
+  el.innerHTML = '';
+  const p = state.petition;
+  const phases = getPetitionPhases(p);
+  let si = 0;
+  phases.forEach((ph, pi) => {
+    const g = document.createElement('div');
+    g.className = 'task-phase-group';
+    const isCur = (pi+1) === state.phase;
+    g.innerHTML = `<div class="task-phase-lbl${isCur?' cur':''}">${ph.name}</div>`;
+    const count = ph.tasks.length;
+    for (let ti=0; ti<count && si<steps.length; ti++,si++) {
+      const step = steps[si], globalIdx = si;
+      const isDone = state.done.includes(globalIdx);
+      const isActive = globalIdx === state.focusIdx;
+      const row = document.createElement('div');
+      row.className = 'task-row';
+      row.innerHTML = `<div class="task-dot${isDone?' done':isActive?' active':''}"></div><div class="task-name${isDone?' done':isActive?' active':''}">${step.t}</div>`;
+      row.onclick = () => { state.focusIdx = globalIdx; renderFocusCard(); const hs = document.querySelector('.home-scroll'); if (hs) hs.scrollTop = 0; };
+      g.appendChild(row);
+    }
+    el.appendChild(g);
+  });
+}
+
+let allTasksOpen = false;
+function toggleAllTasks() {
+  allTasksOpen = !allTasksOpen;
+  document.getElementById('all-tasks-list').classList.toggle('open', allTasksOpen);
+  document.getElementById('all-tasks-chev').classList.toggle('open', allTasksOpen);
+}
+
+/* ═══════════════════════════════════════════════
+   DIAL
+═══════════════════════════════════════════════ */
+function updateDial() {
+  const n=state.sigs, hi=nextMilestone(n), lo=prevMilestone(n);
+  const pct=(hi-lo)>0 ? Math.min((n-lo)/(hi-lo),1) : 0;
+  document.getElementById('dial-arc').style.strokeDashoffset = String(295*(1-pct));
+  const x2 = Math.max(17, 110 - 94 * Math.cos(Math.PI * pct));
+  const grad = document.getElementById('dialGrad');
+  if (grad) { grad.setAttribute('x2', String(x2)); grad.setAttribute('y2', '106'); }
+  // stroke gradient set in SVG attribute — no JS override needed
+  document.getElementById('dial-num').textContent  = fmt(n);
+  document.getElementById('dial-lo').textContent   = fmt(lo);
+  document.getElementById('dial-hi').textContent   = fmt(hi);
+  document.getElementById('dial-goal').textContent = `Next goal: ${fmt(hi)}`;
+}
+
+/* ═══════════════════════════════════════════════
+   CHAT PANEL
+═══════════════════════════════════════════════ */
+let chatOpen = false;
+let chatBadge = 0;
+
+function openChat() {
+  chatOpen = true;
+  document.getElementById('chat-panel').classList.add('open');
+  // no backdrop
+  clearBadge();
+  setTimeout(scrollChatBottom, 120);
+  if (!state.welcomeShown && state.petition) {
+    state.welcomeShown = true;
+    setTimeout(runWelcomeSequence, 350);
+  }
+}
+function closeChat() {
+  chatOpen = false;
+  document.getElementById('chat-panel').classList.remove('open');
+  // no backdrop
+}
+function toggleChat() { chatOpen ? closeChat() : openChat(); }
+
+function addBadge() {
+  chatBadge++;
+  const b = document.getElementById('fab-badge');
+  b.textContent = chatBadge > 9 ? '9+' : chatBadge;
+  b.classList.remove('hidden');
+}
+function clearBadge() {
+  chatBadge = 0;
+  document.getElementById('fab-badge').classList.add('hidden');
+}
+
+function addChatMsg(role, text, quickReplies, isSignal) {
+  const msg = { role, text, quickReplies:quickReplies||[], isSignal:!!isSignal, id:Date.now()+Math.random() };
+  state.chatMsgs.push(msg);
+  renderChatBubble(msg);
+  scrollChatBottom();
+  if (!chatOpen && role === 'copilot') addBadge();
+}
+
+function renderChatBubble(msg) {
+  const el = document.getElementById('cp-messages');
+  const wrap = document.createElement('div');
+  wrap.dataset.mid = msg.id;
+  if (msg.role === 'copilot') {
+    wrap.innerHTML = `<div class="bubble-row"><div class="bubble-avatar">${C_LOGO}</div><div class="bubble left${msg.isSignal?' signal':''}"><div class="bubble-name">Co-Pilot</div>${msg.text}</div></div>`;
+    if (msg.quickReplies.length) {
+      const qr = document.createElement('div');
+      qr.className = 'qr-row';
+      msg.quickReplies.forEach(label => {
+        const btn = document.createElement('button');
+        btn.className = 'qr-chip gray';
+        btn.textContent = label;
+        btn.onclick = () => handleQR(label, btn, qr, msg);
+        qr.appendChild(btn);
+      });
+      wrap.appendChild(qr);
+    }
+  } else {
+    wrap.innerHTML = `<div class="bubble-row right"><div class="bubble right">${msg.text}</div></div>`;
+  }
+  el.appendChild(wrap);
+}
+
+function handleQR(label, btn, row, msg) {
+  if (btn.classList.contains('used')) return;
+  row.querySelectorAll('.qr-chip').forEach(b=>{ b.disabled=true; b.style.opacity='.45'; });
+  btn.classList.add('used'); btn.style.opacity='1';
+  if (label === 'See your full roadmap') { closeChat(); showRoadmap(); return; }
+  addChatMsg('user', label);
+  setTimeout(()=>{
+    const reply = getQRReply(label);
+    const qrs = getQRChips(label);
+    addChatMsg('copilot', reply, qrs);
+  }, 700);
+}
+
+function getQRChips(label) {
+  const map = {
+    "Draft something":      ["Draft a social post","Draft a supporter update","Draft a letter"],
+    "Draft a social post":  ["Got it"],
+    "Draft a supporter update": ["Got it"],
+    "Draft a letter":       ["Got it"],
+    "See next task":        ["Got it","I need help with this"],
+    "See full roadmap":     ["Got it"],
+    "Getting more signatures": ["Yes, draft it","Got it"],
+    "Reaching decision makers": ["Got it"],
+    "Getting press coverage":   ["Yes, help me draft","Got it"],
+    "Yes, draft it":        ["Got it"],
+    "Yes, help me draft":   ["Got it"],
+    "Post this on Facebook": ["Got it"],
+    "Edit the post":        ["Got it"],
+    "See other channels":   ["Got it","Draft a social post"],
+  };
+  return map[label] || [];
+}
+
+/* Adds a copilot message containing raw HTML (e.g. action cards) without a bubble wrapper */
+function addInlineCopilotMsg(html) {
+  const el = document.getElementById('cp-messages');
+  if (!el) return;
+  const wrap = document.createElement('div');
+  const id = Date.now() + Math.random();
+  wrap.dataset.mid = id;
+  wrap.innerHTML = '<div class="bubble-row"><div class="bubble-avatar">' + C_LOGO + '</div><div class="bubble left"><div class="bubble-name">Co-Pilot</div>' + html + '</div></div>';
+  el.appendChild(wrap);
+  scrollChatBottom();
+  if (!chatOpen) addBadge();
+}
+
+/* Generates a contextual pre-drafted post for a given step */
+function genStepDraft(step, p) {
+  const dm  = (p.dm  || '').split(',')[0].split(' and ')[0].trim();
+  const loc = (p.loc || '').split(',')[0].trim();
+  const topic = p.topic || 'this issue';
+  const url = p.url || 'change.org/p/your-petition';
+  const sigs = fmt(p.sigs || 0);
+  const next = fmt(nextMilestone(p.sigs || 0));
+  const t = (step.t || '').toLowerCase();
+
+  if (t.includes('facebook') || t.includes('community group') || t.includes('nextdoor') || t.includes('instagram') || t.includes('tiktok') || t.includes('social')) {
+    return `${sigs} people in ${loc} have signed — help us reach ${next}.\n\nWe're calling for action on ${topic}. This affects real people in our community and we need to show up in numbers.\n\nSign and share → ${url}`;
+  }
+  if (t.includes('personal') || t.includes('contact') || t.includes('share')) {
+    return `Hey — I'm working on something that matters for our community.\n\nI started a petition about ${topic} in ${loc}. We have ${sigs} signatures so far and I'm trying to reach ${next}. Takes 30 seconds to sign.\n\nWould mean a lot: ${url}`;
+  }
+  if (t.includes('update') || t.includes('signer')) {
+    return `We hit ${sigs} signatures — thank you! 🙏\n\nHere's where things stand: [one sentence on recent progress]. Help us reach ${next} by sharing with one more person today.\n\n${url}`;
+  }
+  if (t.includes('journalist') || t.includes('press') || t.includes('media') || t.includes('story')) {
+    return `Hi [Reporter],\n\nI'm reaching out about a local story in ${loc} — ${sigs} residents have signed a petition on ${topic} and ${dm} hasn't responded publicly yet.\n\nI have people available to speak on record. Would you be open to a quick conversation?\n\n[Your name]`;
+  }
+  if (t.includes('contact') || t.includes('written comment') || t.includes('formal')) {
+    return `Dear ${dm},\n\nI'm writing on behalf of ${sigs} ${loc} residents who have signed a petition on ${topic}.\n\nOur ask is specific: [your concrete request here]. We'd welcome a public response or a meeting.\n\nThank you,\n[Your name]`;
+  }
+  if (t.includes('milestone') || t.includes('flyer') || t.includes('qr')) {
+    return `We just hit ${sigs} signatures! 🎉\n\nThis campaign is growing. Help us reach ${next} — share with anyone who cares about ${topic} in ${loc}.\n\n${url}`;
+  }
+  return `${sigs} people in ${loc} have signed. Help us reach ${next} and show that this community demands action on ${topic}.\n\n${url}`;
+}
+
+/* Builds the standard action card HTML */
+function buildActionCard(step, label) {
+  const lbl = label || 'Today\'s most important action';
+  const why = step.why || 'This is the highest-leverage action you can take right now.';
+  return (
+    '<div class="cp-action-card">' +
+      '<div class="cp-action-label">' + lbl + '</div>' +
+      '<div class="cp-action-title">' + step.t + '</div>' +
+      '<div class="cp-action-why">' + why + '</div>' +
+      '<button class="cp-action-cta" onclick="handleShowPreDraft()">See pre-drafted post →</button>' +
+      '<div class="cp-action-secondary">' +
+        '<button class="cp-action-sec-btn" onclick="handleActionCardDraft()">Help me write something</button>' +
+        '<button class="cp-action-sec-btn" onclick="handleActionCardVoice()">Use my voice</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+/* Shows the pre-drafted post for the current step */
+function handleShowPreDraft() {
+  const steps = getPetitionSteps(state.petition);
+  const step = steps.find((_,i) => !state.done.includes(i)) || steps[0];
+  if (!step) return;
+  const draft = genStepDraft(step, state.petition);
+  addChatMsg('copilot',
+    'Here\'s a pre-drafted post for this step — edit it to sound like you:' +
+    '<div style="margin-top:.625rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem .875rem;font-size:.8125rem;color:#0f172a;line-height:1.5;white-space:pre-wrap;font-family:var(--mono)">' +
+    draft.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') +
+    '</div>',
+    ['Looks good — mark done', 'Help me customize it', 'Use my voice']
+  );
+}
+
+/* Prompts the user to describe what they want drafted */
+function handleActionCardDraft() {
+  addChatMsg('copilot', 'Sure — what do you want to write? A social post, a personal message, or a letter to the decision maker?', ['Social post','Personal message','Letter to decision maker']);
+}
+
+/* Opens voice input so the user can dictate in their own words */
+function handleActionCardVoice() {
+  addChatMsg('copilot', 'Go ahead — tell me in your own words what you want to say. I\'ll shape it into a ready-to-post draft.', []);
+  setTimeout(() => {
+    const mic = document.getElementById('mic-btn');
+    if (mic) mic.click();
+  }, 400);
+}
+
+/* Called from inline CTA buttons inside action cards in the chat */
+function handleActionCardCTA() {
+  const steps = getPetitionSteps(state.petition);
+  const idx = steps.findIndex((_,i) => !state.done.includes(i));
+  if (idx !== -1) {
+    state.done.push(idx);
+    state.focusIdx = idx + 1 < steps.length ? idx + 1 : idx;
+  }
+  addChatMsg('copilot', "Step marked done — great work! Here\'s what to do next.", ['See next task','Got it']);
+}
+
+/* Welcome sequence shown once when chat panel first opens */
+function runWelcomeSequence() {
+  const p = state.petition;
+  if (!p) return;
+  const steps = getPetitionSteps(p);
+  const first = steps.find((_,i) => !state.done.includes(i)) || steps[0];
+  if (first) {
+    addInlineCopilotMsg(buildActionCard(first, 'Today\'s most important action'));
+  }
+}
+
+function getQRReply(label) {
+  const p = state.petition;
+  if (!p) return "Let me know how I can help.";
+  const steps = getPetitionSteps(p);
+  const nextStep = steps.find((_,i) => !state.done.includes(i));
+
+  const map = {
+    "Got it":                "Great — consistent small actions compound fast. What else can I help with?",
+    "Looks good — mark done": (() => { const steps = getPetitionSteps(p); const idx = steps.findIndex((_,i)=>!state.done.includes(i)); if(idx!==-1){state.done.push(idx);state.focusIdx=idx+1<steps.length?idx+1:idx;} return "Done ✓ — here\'s your next action:"; })(),
+    "See next task":         nextStep ? buildActionCard(nextStep, 'Up next') : "You\'ve completed all current steps — great work!",
+    "See full roadmap":      buildRoadmapSummary(p),
+    "Draft something":       "Sure — which would you like?",
+    "Tell me more":          "For a <strong>" + p.topic + "</strong> campaign in " + p.loc + ", the first two weeks are critical. Petitions that hit 100 signatures early are significantly more likely to get a decision-maker response.",
+    "I need help with this": "Let\'s break it down. What specifically feels hard? Type it below.",
+    "Yes, draft it":         buildDraft('update', p),
+    "Help me draft something":"Which would be most useful right now?",
+    "I\'ll do it later":     "Totally fine. Updates are most effective within 48 hours of a milestone.",
+    "Give me more context":   "The key is specificity and personal tone — generic messages get ignored, but a message from someone who was actually affected gets shared.",
+    "Show me how":           "Go to Sharing Tools in the nav for pre-written copy. Tag local news accounts to extend reach beyond your network.",
+    "Not right now":         "Got it — I\'ll flag it again if the moment is still good.",
+    "Tell me about the event": "The event on " + futureDate() + " is directly relevant to " + p.topic + " in " + p.loc + ". Showing up and giving 3-minute public comment puts you on the official record.",
+    "Skip this":             "Understood. I\'ll keep watching for the next opportunity.",
+    "What\'s next?":         nextStep ? "Your next step: <strong>" + nextStep.t + "</strong>. " + (nextStep.c||'') : "You\'ve finished your current phase — time to advance!",
+    "Getting more signatures":"The fastest path is personal outreach — texting 20 people who know you personally converts 3× better than social posts. Want me to draft that message?",
+    "Reaching decision makers":"For <strong>" + p.dm + "</strong>, showing up at a public meeting and speaking on record is more effective than email. Want help preparing a 3-minute statement?",
+    "Getting press coverage": "Lead with one powerful resident story, not statistics. Want me to draft a press pitch for " + p.loc + " journalists?",
+    "I need a draft or template":"I can draft a social post, a letter to " + p.dm + ", or a supporter update. Which do you need first?",
+    "Yes, help me draft":     buildDraft('social', p),
+    "Draft a social post":    buildDraft('social', p),
+    "Draft a supporter update": buildDraft('update', p),
+    "Draft a letter":         buildDraft('letter', p),
+    "Post this on Facebook":  "Perfect. Open Facebook and paste that post — tag 'Lakeland Florida' and 'Polk County FL' to expand reach beyond your friends. Come back and tell me how it goes.",
+    "Edit the post":          "Of course — here's the post again. Change the tone, add a personal story, or adjust the hashtags. The key is keeping it under 3 sentences so people actually read it.<br><br><em style='background:#f8fafc;display:block;border:1px solid #e2e8f0;border-radius:6px;padding:.5rem;margin-top:.375rem;font-size:.8125rem'>&ldquo;Our community deserves real answers about Lake Bonny flooding. 348 neighbors have signed — will you add yours? 👇 [link]<br><br>#LakeBonny #Lakeland #HoldThemAccountable&rdquo;</em>",
+    "See other channels":     "Here's how your top channels compare for this campaign:<br><br><strong>Facebook</strong> — 47 sigs from 4 shares (best)<br><strong>Nextdoor</strong> — 18 sigs from 2 shares<br><strong>Text/email</strong> — try this next, converts 3× better for personal networks<br><br>Facebook is clearly working. Lean in there first.",
+  };
+  return map[label] || ("Good question. Right now your focus should be: <strong>" + (nextStep ? nextStep.t : 'delivering your signatures') + "</strong>. What specifically can I help with?");
+}
+
+function buildNextTaskMessage() {
+  const steps = getPetitionSteps(state.petition);
+  const s = steps.find((_,i) => !state.done.includes(i));
+  if (!s) return "You\'ve completed all steps in your current phase — great work!";
+  return buildActionCard(s, 'Your next step');
+}
+
+function buildRoadmapSummary(p) {
+  const phases = p.roadmap || [];
+  if (!phases.length) return "Your roadmap is loading — tap \'See full roadmap\' in the chat quick replies.";
+  const phaseNames = phases.map((ph,i) => '<strong>' + ph.name + '</strong> (' + ph.tasks.length + ' tasks)').join(' → ');
+  return 'Your roadmap has 4 phases: ' + phaseNames + '.<br><br>You can view the full roadmap with all tasks by tapping the quick reply below.';
+}
+
+function buildDraft(type, p) {
+  const drafts = {
+    'update': '📝 <strong>Draft update for your supporters:</strong><br><br><em>"We just hit a milestone — thank you. Every signature on this petition is a voice demanding that ' + p.dm + ' take action on ' + p.topic + ' in ' + p.loc + '. We\'re not done yet. Share this with one more person today."</em><br><br>Feel free to edit this before sending.',
+    'social': '📱 <strong>Draft social post:</strong><br><br><em>"' + p.title + '. ' + p.sigs + ' people have already signed. We need ' + p.dm + ' to act on ' + p.topic + ' in ' + p.loc + '. Will you add your voice? [link]"</em><br><br>Works for Facebook, Instagram, or X.',
+    'letter': '✉️ <strong>Draft letter to ' + p.dm + ':</strong><br><br><em>"Dear ' + p.dm + ', I am writing on behalf of ' + p.sigs + ' petition signers who are calling for immediate action on ' + p.topic + ' in ' + p.loc + '. We respectfully request..."</em><br><br>This is a starting point — personalize before sending.',
+  };
+  return drafts[type] || drafts['update'];
+}
+
+
+function sendChatMsg() {
+  const input = document.getElementById('cp-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addChatMsg('user', text);
+  setTimeout(()=>{
+    const p = state.petition;
+    const lo = text.toLowerCase();
+    let reply;
+    if (lo.includes('change') || lo.includes('adjust') || lo.includes('plan') || lo.includes('update my')) {
+      reply = `I can update your plan. What's changed? Tell me what's going on and I'll adjust your focus steps right now.`;
+    } else if (lo.includes('next') || lo.includes('what should')) {
+      const step = getPetitionSteps(p)[state.focusIdx];
+      reply = `Your current focus is: <strong>${step?.t || 'building momentum'}</strong>. ${step?.c || ''} Want to mark it done and move on?`;
+    } else if (lo.includes('decision maker') || lo.includes('who do i')) {
+      reply = `Your primary decision maker is <strong>${p.dm}</strong>. Most effective approach: direct individual email, then show up at a public meeting on the record.`;
+    } else if (lo.includes('share') || lo.includes('social')) {
+      reply = `For ${p.topic} in ${p.loc}, Facebook groups and direct texts outperform Instagram for early growth. Start personal — your first 20 contacts are your fastest path to 100 signatures.`;
+    } else if (lo.includes('media') || lo.includes('press')) {
+      reply = `Lead with human impact, not numbers. One family's story beats 300 signatures in a pitch. Lakeland Ledger and Bay News 9 are your best bets.`;
+    } else {
+      reply = `Good question. Right now your focus is: <strong>${getPetitionSteps(p)[state.focusIdx]?.t || 'your next step'}</strong>. Every action you take should move you closer to ${fmt(nextMilestone(state.sigs))} signatures. What specifically can I help with?`;
+    }
+    addChatMsg('copilot', reply);
+  }, 900);
+}
+
+function scrollChatBottom() {
+  const el = document.getElementById('cp-messages');
+  if (el) requestAnimationFrame(()=>{ el.scrollTop = el.scrollHeight; });
+}
+
+/* ─── Voice input ─── */
+let recognition = null, isRecording = false;
+
+function setupVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { const m=document.getElementById('mic-btn'); if(m) m.style.display='none'; return; }
+  recognition = new SR();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+  recognition.onresult = e => {
+    const t = Array.from(e.results).map(r=>r[0].transcript).join('');
+    document.getElementById('cp-input').value = t;
+    if (e.results[0].isFinal) { isRecording=false; updateMicBtn(); }
+  };
+  recognition.onerror = recognition.onend = () => { isRecording=false; updateMicBtn(); };
+}
+
+function toggleVoice() {
+  if (!recognition) return;
+  if (isRecording) { recognition.stop(); isRecording=false; }
+  else { try { recognition.start(); isRecording=true; } catch(e) { isRecording=false; } }
+  updateMicBtn();
+}
+
+function updateMicBtn() {
+  const b = document.getElementById('mic-btn');
+  if (b) { b.classList.toggle('recording', isRecording); b.title = isRecording ? 'Stop' : 'Voice input'; }
+}
+
+// Voice input for onboarding open-ended text fields
+let obRecognition = null;
+function toggleObVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+  const btn   = document.getElementById('ob-mic-btn');
+  const field = document.getElementById('ob-text-input');
+  const send  = document.getElementById('ob-send-btn');
+  if (obRecognition) { obRecognition.stop(); obRecognition = null; if (btn) btn.classList.remove('recording'); return; }
+  obRecognition = new SR();
+  obRecognition.continuous = false;
+  obRecognition.interimResults = true;
+  obRecognition.lang = 'en-US';
+  obRecognition.onresult = e => {
+    const t = Array.from(e.results).map(r => r[0].transcript).join('');
+    field.value = t;
+    if (send) send.disabled = t.trim().length === 0;
+  };
+  obRecognition.onend = () => { obRecognition = null; if (btn) btn.classList.remove('recording'); };
+  obRecognition.onerror = () => { obRecognition = null; if (btn) btn.classList.remove('recording'); };
+  obRecognition.start();
+  if (btn) btn.classList.add('recording');
+}
+function stopObVoice() { if (obRecognition) { obRecognition.stop(); obRecognition = null; } const b = document.getElementById('ob-mic-btn'); if (b) b.classList.remove('recording'); }
+
+// Voice input for inline "Something else" field
+let elseRecognition = null;
+function toggleElseVoice(btn) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+  const field = btn.closest('.else-wrap').querySelector('.else-field');
+
+  if (elseRecognition) { elseRecognition.stop(); elseRecognition = null; btn.classList.remove('recording'); return; }
+
+  elseRecognition = new SR();
+  elseRecognition.continuous = false;
+  elseRecognition.interimResults = true;
+  elseRecognition.lang = 'en-US';
+  elseRecognition.onresult = e => { field.value = Array.from(e.results).map(r=>r[0].transcript).join(''); };
+  elseRecognition.onend = () => { elseRecognition = null; btn.classList.remove('recording'); };
+  elseRecognition.onerror = () => { elseRecognition = null; btn.classList.remove('recording'); };
+  elseRecognition.start();
+  btn.classList.add('recording');
+}
+
+/* ═══════════════════════════════════════════════
+   SIGNALS — pop up as chat messages, auto-open panel
+═══════════════════════════════════════════════ */
+function injectSignal(idx) {
+  const sig = SIGNAL_MESSAGES[idx];
+  const text = sig.text(state.petition);
+  if (state.currentScreen !== 'home') showHome();
+  addChatMsg('copilot', text, sig.qr, true);
+  // Auto-open chat panel after brief delay so user sees the badge first
+  setTimeout(() => openChat(), 500);
+}
+
+/* ═══════════════════════════════════════════════
+   SUPPORTER SHARING SIGNAL
+═══════════════════════════════════════════════ */
+function injectShareActivity() {
+  if (state.currentScreen !== 'home') showHome();
+  const html =
+    `<div style="margin-bottom:.5rem">I spotted something — <strong>Marcus Williams</strong> has been driving real results for your petition:</div>` +
+    `<div style="display:flex;align-items:center;gap:.5rem;background:rgba(37,99,235,.07);border-radius:8px;padding:.5rem .625rem;margin-bottom:.625rem">` +
+      `<img src="https://i.pravatar.cc/48?img=7" style="width:2.25rem;height:2.25rem;border-radius:50%;flex-shrink:0" alt="Marcus">` +
+      `<div style="flex:1;min-width:0">` +
+        `<div style="font-size:.8125rem;font-weight:600;color:#0f172a">Marcus Williams</div>` +
+        `<div style="font-size:.6875rem;color:#64748b;line-height:1.5">Facebook · 4 shares · <strong>47 sigs</strong><br>Nextdoor · 2 shares · <strong>18 sigs</strong></div>` +
+      `</div>` +
+      `<div style="font-size:.875rem;font-weight:700;color:#2563eb;white-space:nowrap">65 total</div>` +
+    `</div>` +
+    `<div style="margin-bottom:.5rem">Facebook converts <strong>2.6× better</strong> than Nextdoor for your campaign. Here's a post ready to go:</div>` +
+    `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:.5rem .625rem;font-size:.8125rem;color:#334155;line-height:1.5">"Our community deserves real answers about Lake Bonny flooding. 348 neighbors have signed — will you add yours? 👇 [link]<br><br>#LakeBonny #Lakeland #HoldThemAccountable"</div>`;
+  addChatMsg('copilot', html, ['Post this on Facebook', 'Edit the post', 'See other channels'], true);
+  setTimeout(() => openChat(), 500);
+}
+
+/* ═══════════════════════════════════════════════
+   MILESTONE
+═══════════════════════════════════════════════ */
+function simulateMilestone() {
+  state.sigs = nextMilestone(state.sigs);
+  updateDial();
+  const flash = document.getElementById('milestone-flash');
+  flash.textContent = `🎉 ${fmt(state.sigs)} signatures!`;
+  flash.classList.remove('hidden');
+  fireConfetti();
+  setTimeout(()=>flash.classList.add('hidden'), 3500);
+  setTimeout(()=>injectSignal(0), 800);
+}
+
+/* ═══════════════════════════════════════════════
+   ROADMAP
+═══════════════════════════════════════════════ */
+function renderRoadmap() {
+  const p = state.petition;
+  const el = document.getElementById('rm-scroll');
+  el.innerHTML = '';
+  const phaseStatus = ['done','done','done','done'];
+  phaseStatus[state.phase-1] = 'cur';
+  for (let i=state.phase; i<4; i++) phaseStatus[i] = 'upcoming';
+
+  (p.roadmap || []).forEach((ph,pi)=>{
+    const status = pi < state.phase-1 ? 'done' : pi===state.phase-1 ? 'cur' : 'upcoming';
+    const block = document.createElement('div');
+    block.className = 'rm-phase-block';
+
+    // connector line above (except first)
+    if (pi > 0) {
+      const conn = document.createElement('div');
+      conn.className = 'rm-phase-connector' + (pi < state.phase ? ' done' : '');
+      block.appendChild(conn);
+    }
+
+    const header = document.createElement('div');
+    header.className = 'rm-phase-header';
+    header.innerHTML = `
+      <div class="rm-phase-dot ${status}">${pi < state.phase-1 ? '✓' : pi+1}</div>
+      <div class="rm-phase-name-txt ${status}">${ph.name}${status==='cur'?' — current':''}</div>
+    `;
+    block.appendChild(header);
+
+    const taskWrap = document.createElement('div');
+    taskWrap.className = 'rm-tasks';
+    ph.tasks.forEach((task,ti)=>{
+      const taskDiv = document.createElement('div');
+      const detailId = `rm-d-${pi}-${ti}`;
+      const chevId = `rm-c-${pi}-${ti}`;
+      taskDiv.innerHTML = `
+        <button class="rm-task-toggle" onclick="toggleRmTask('${detailId}','${chevId}')">
+          <span class="rm-task-name${status==='cur'?' cur':''}">${task.t}</span>
+          <span class="rm-chevron" id="${chevId}">▼</span>
+        </button>
+        <div class="rm-task-detail" id="${detailId}">${task.d}</div>
+      `;
+      taskWrap.appendChild(taskDiv);
+    });
+    block.appendChild(taskWrap);
+    el.appendChild(block);
+  });
+}
+
+function toggleRmTask(detailId, chevId) {
+  const d = document.getElementById(detailId);
+  const c = document.getElementById(chevId);
+  const open = d.classList.toggle('open');
+  c.classList.toggle('open', open);
+}
+
+/* ═══════════════════════════════════════════════
+   FAB
+═══════════════════════════════════════════════ */
+function fabTap() {
+  if (state.currentScreen === 'home') {
+    openChat();
+    scrollChatBottom();
+    const inp = document.getElementById('cp-input'); if (inp) inp.focus();
+  } else if (state.currentScreen === 'roadmap') {
+    showHome();
+    setTimeout(()=>{ openChat(); const inp = document.getElementById('cp-input'); if (inp) inp.focus(); }, 200);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   DEMO
+═══════════════════════════════════════════════ */
+function toggleDemo() {
+  state.demoOpen = !state.demoOpen;
+  document.getElementById('demo-inner').classList.toggle('open', state.demoOpen);
+  document.getElementById('demo-chev').textContent = state.demoOpen ? '▲' : '▼';
+}
+
+function loadFromDemoInput() {
+  const v = document.getElementById('demo-url-input').value.trim();
+  if (!v) return;
+  clearSaved();
+  clearOnboarding();
+  // Reset state fully, then parse the new URL
+  state = { petition:null, answers:[], obStep:0, obTypingTimer:null, sigs:0, phase:1, chatMsgs:[], demoOpen:false, currentScreen:'url', platforms:[], tactics:[], personalConnection:'', focusIdx:0, done:[], welcomeShown:false };
+  ['bi1','bi2','bi3','bi4'].forEach(id=>{ const el=document.getElementById(id); if(el){el.classList.remove('on','done');} });
+  document.getElementById('overlay-build').classList.add('hidden');
+  document.getElementById('overlay-parse').classList.add('hidden');
+  document.getElementById('ob-messages').innerHTML = '';
+  document.getElementById('cp-messages').innerHTML = '';
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  startParsing(v);
+}
+
+function resetOnboarding() {
+  // "Reset" = go back to home keeping all your answers — no questions
+  if (!state.petition) return;
+  closeChat();
+  buildHomeAndShow();
+}
+
+function redoOnboardingQuestions() {
+  // Explicitly wipe answers and restart the question flow
+  if (!state.petition) return;
+  clearOnboarding();
+  state.answers = []; state.platforms = []; state.tactics = []; state.personalConnection = '';
+  state.obStep = 0;
+  ['bi1','bi2','bi3','bi4'].forEach(id=>{ const el=document.getElementById(id); if(el){el.classList.remove('on','done');} });
+  document.getElementById('ob-messages').innerHTML = '';
+  document.getElementById('ob-text-input').style.display = 'none';
+  document.getElementById('ob-send-btn').style.display = 'none';
+  const _mic = document.getElementById('ob-mic-btn'); if(_mic){_mic.style.display='none'; stopObVoice();}
+  document.getElementById('overlay-build').classList.add('hidden');
+  showScreen('onboard');
+  document.getElementById('bottom-nav').style.display = 'none';
+  document.getElementById('chat-fab-wrap').style.display = 'none';
+  const obAv = document.getElementById('ob-avatar-el'); if(obAv) obAv.innerHTML=C_LOGO;
+  const cpAv = document.getElementById('cp-avatar-el'); if(cpAv) cpAv.innerHTML=C_LOGO;
+  renderObPips();
+  const p = state.petition;
+  const msg = `Hi — I've read your petition on <strong>${p.topic}</strong> in ${p.loc}. I understand your ask, and I can see a clear path to getting <strong>${p.dm}</strong> to respond. I'm here to help you build a plan to succeed — but first, a few quick questions so I can make it specific to you.`;
+  setTimeout(()=>addObCopilotMsg(msg, ()=>{ setTimeout(()=>showObQuestion(0), 400); }), 300);
+}
+
+function fullReset() {
+  state = { petition:null, answers:[], obStep:0, obTypingTimer:null, sigs:0, phase:1, chatMsgs:[], demoOpen:false, currentScreen:'url', platforms:[], tactics:[], personalConnection:'', focusIdx:0, done:[], welcomeShown:false };
+  ['bi1','bi2','bi3','bi4'].forEach(id=>{ const el=document.getElementById(id); if(el){el.classList.remove('on','done');} });
+  document.getElementById('overlay-build').classList.add('hidden');
+  document.getElementById('overlay-parse').classList.add('hidden');
+  document.getElementById('ob-messages').innerHTML = '';
+  document.getElementById('ob-text-input').style.display = 'none';
+  document.getElementById('ob-send-btn').style.display = 'none';
+  const _mic = document.getElementById('ob-mic-btn'); if (_mic) { _mic.style.display = 'none'; stopObVoice(); }
+  document.getElementById('cp-messages').innerHTML = '';
+  document.getElementById('bottom-nav').style.display = 'none';
+  document.getElementById('chat-fab-wrap').style.display = 'none';
+  // demo-controls always visible at top
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  // Never show URL screen — reload from saved or default
+  const saved = loadSaved();
+  startParsing(saved ? saved.url : SLUGS['lake-bonny']);
+}
+
+/* ═══════════════════════════════════════════════
+   CONFETTI
+═══════════════════════════════════════════════ */
+function fireConfetti() {
+  const cv=document.getElementById('confetti-canvas');
+  const ctx=cv.getContext('2d');
+  cv.width=window.innerWidth; cv.height=window.innerHeight;
+  const cols=['#e01a2b','#0d4dfb','#059669','#f59e0b','#8b5cf6'];
+  const ps=Array.from({length:80},()=>({
+    x:Math.random()*cv.width, y:Math.random()*cv.height*-.5,
+    w:Math.random()*10+5, h:Math.random()*6+3,
+    col:cols[0|Math.random()*cols.length],
+    vy:Math.random()*3+2, vx:(Math.random()-.5)*2.5,
+    ang:Math.random()*Math.PI*2, sp:(Math.random()-.5)*.2, op:1,
+  }));
+  let fr=0;
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height); fr++;
+    let alive=false;
+    ps.forEach(p=>{ p.y+=p.vy; p.x+=p.vx; p.ang+=p.sp; if(fr>70) p.op-=.02;
+      if(p.y<cv.height&&p.op>0){ alive=true; ctx.save(); ctx.globalAlpha=Math.max(0,p.op); ctx.translate(p.x,p.y); ctx.rotate(p.ang); ctx.fillStyle=p.col; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore(); }
+    });
+    if(alive) requestAnimationFrame(draw); else ctx.clearRect(0,0,cv.width,cv.height);
+  }
+  requestAnimationFrame(draw);
+}
+
+/* ═══════════════════════════════════════════════
+   CLOCK
+═══════════════════════════════════════════════ */
+function tickClock() {
+  const n=new Date();
+  const el=document.getElementById('sb-time');
+  if(el) el.textContent=`${n.getHours()}:${String(n.getMinutes()).padStart(2,'0')}`;
+}
+setInterval(tickClock, 30000);
+</script>
+
+
+
+<script src="/agentation-widget.js"></script>
+</body>
+</html>

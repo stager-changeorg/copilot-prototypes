@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Brief — Change.org AI Co-Pilot</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="http://localhost:4747/agentation.js" defer></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; padding: 0;
+    background: #060e1d;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    color: #f1f5f9;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: #0a1628; }
+  ::-webkit-scrollbar-thumb { background: #1e3455; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2a4575; }
+
+  .ai-callout {
+    background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(29,78,216,0.06) 100%);
+    border-left: 3px solid #3b82f6;
+    border-radius: 0 8px 8px 0;
+  }
+
+  @keyframes pulseRing {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(1.2); }
+  }
+  .pulse-dot { animation: pulseRing 2.4s ease-in-out infinite; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.2s ease-out forwards; }
+
+  .row-hover { transition: background 0.14s ease; }
+  .row-hover:hover { background: rgba(255,255,255,0.04) !important; }
+
+  .btn-primary {
+    background: #2563eb; color: #fff; border: none; border-radius: 8px;
+    padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer;
+    transition: background 0.15s, transform 0.1s; letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+  .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: rgba(37,99,235,0.1); color: #93c5fd;
+    border: 1px solid rgba(37,99,235,0.28); border-radius: 8px;
+    padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s; white-space: nowrap;
+  }
+  .btn-secondary:hover { background: rgba(37,99,235,0.18); }
+
+  .btn-ghost {
+    background: none; color: #60a5fa; border: none;
+    font-size: 12px; font-weight: 700; cursor: pointer; padding: 4px 0;
+    display: flex; align-items: center; gap: 4px; transition: color 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .btn-ghost:hover { color: #93c5fd; }
+
+  .card {
+    background: #0c1a31;
+    border: 1px solid rgba(255,255,255,0.065);
+    border-radius: 12px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: rgba(59,130,246,0.2); }
+
+  .tab-sticky { position: sticky; top: 64px; z-index: 40; }
+
+  .milestone-row { transition: background 0.12s; }
+  .milestone-row:hover { background: rgba(255,255,255,0.03) !important; }
+
+  .dm-bar { position: relative; overflow: hidden; }
+  .dm-bar::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #1d4ed8, #7c3aed);
+  }
+
+  .chevron-reveal { opacity: 0; transition: opacity 0.15s; }
+  .summary-row:hover .chevron-reveal { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+
+// ═══════════════════════════════════════════
+// ICONS
+// ═══════════════════════════════════════════
+
+const mkSvg = (inner, size = 16) => (props = {}) => (
+  <svg width={props.size || size} height={props.size || size}
+    viewBox="0 0 24 24" fill="none" stroke={props.color || "currentColor"}
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    dangerouslySetInnerHTML={{ __html: inner }} />
+);
+
+// Named icon components
+const IZap    = () => <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
+const IMap    = () => <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>;
+const IUsers  = () => <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+const IShield = () => <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
+const IBook   = () => <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>;
+const IBell   = () => <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
+const IChevR  = () => <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
+const IChevD  = () => <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>;
+const IChevU  = () => <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>;
+const ICheck  = () => <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
+const IGlobe  = () => <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
+const IStar   = () => <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
+const IAward  = () => <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>;
+
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+
+const D = {
+  title: "End Mandatory Minimum Sentencing for Nonviolent Drug Offenses",
+
+  phases: [
+    { n: 1, name: "Spark",    desc: "Launch · early signatures · establishing the story",         done: true,  cur: false },
+    { n: 2, name: "Build",    desc: "Coalition growth · media attention · congressional outreach", done: false, cur: true  },
+    { n: 3, name: "Pressure", desc: "Peak engagement · escalation · earned media · Hill visits",  done: false, cur: false },
+    { n: 4, name: "Decision", desc: "Committee vote · floor vote · policy response",              done: false, cur: false },
+  ],
+
+  milestones: [
+    { text: "Reach 10,000 signatures",                                 status: "active", effort: "medium" },
+    { text: "Make contact with 5 Senate Judiciary Committee offices",  status: "todo",   effort: "heavy"  },
+    { text: "Secure one earned media mention (national outlet)",       status: "todo",   effort: "medium" },
+    { text: "Partner with one national criminal justice organization", status: "todo",   effort: "medium" },
+    { text: "Recruit 3 directly impacted people to co-sign a letter", status: "todo",   effort: "light"  },
+  ],
+
+  geo: ["New York", "California", "Texas", "Georgia"],
+
+  signers: [
+    { label: "A public defender with 22K followers",        tag: "High reach",               color: "#3b82f6" },
+    { label: "A formerly incarcerated advocate",            tag: "Lived experience",          color: "#a78bfa" },
+    { label: "A retired federal judge",                     tag: "Institutional credibility", color: "#f59e0b" },
+  ],
+
+  petitions: [
+    { title: "Repeal the 1994 Crime Bill's Mandatory Minimums",                   sigs: "31,204", status: "Active" },
+    { title: "Pass the EQUAL Act: End Crack/Powder Cocaine Sentencing Disparity", sigs: "18,540", status: "Active" },
+    { title: "Restore Judicial Discretion in Federal Drug Sentencing",            sigs: "9,872",  status: "Won"   },
+  ],
+
+  orgs: [
+    { name: "ACLU National",                       role: "Established coalition partner",               initial: "A", color: "#3b82f6" },
+    { name: "Brennan Center for Justice",           role: "Policy credibility and media reach",         initial: "B", color: "#a78bfa" },
+    { name: "Families Against Mandatory Minimums",  role: "Constituent stories and Hill relationships", initial: "F", color: "#22c55e" },
+  ],
+
+  dmPrimary: {
+    name: "Sen. Dick Durbin", party: "D-IL", role: "Chair, Senate Judiciary Committee",
+    signal: "Co-sponsored the SAFE Justice Act in 2021. Has engaged with sentencing reform advocates before.",
+    points: [
+      "Chair of the committee that controls whether this bill gets a hearing",
+      "Up for reelection in 2026 — constituent pressure matters now",
+      "Has cited constituent stories in floor speeches on criminal justice",
+    ],
+    asks: "Constituent letters with personal stories + coalition sign-on from Illinois-based organizations",
+  },
+
+  dmSecondary: [
+    { name: "Sen. Chuck Grassley",  sub: "R-IA · Ranking Member",     level: "moderate", action: "Draft outreach", init: "G"  },
+    { name: "Attorney General",     sub: "DOJ · Executive Branch",    level: "unknown",  action: "Find contact",   init: "AG" },
+    { name: "Your State Senators",  sub: "Based on your location",    level: "check",    action: "Look them up",   init: "?"  },
+  ],
+
+  timeline: [
+    { day: "Day 1",  text: "Campaign launched — 312 signatures in the first 24 hours",                                                           today: false },
+    { day: "Day 9",  text: "A public defender shared on Twitter/X — 800 signatures overnight",                                                  today: false },
+    { day: "Day 14", text: "National reach — signatures confirmed from all 50 states",                                                          today: false },
+    { day: "Day 21", text: "A retired federal judge signed, calling mandatory minimums \"an abdication of judicial responsibility\"",            today: false },
+    { day: "Today",  text: "4,847 signatures, Phase 2 underway, Senate Judiciary Committee in active session",                                  today: true  },
+  ],
+};
+
+// ═══════════════════════════════════════════
+// SHARED PRIMITIVES
+// ═══════════════════════════════════════════
+
+const AiCallout = ({ children, style }) => (
+  <div className="ai-callout" style={{ padding: "11px 14px", ...style }}>
+    <div style={{ fontSize: 9, fontWeight: 800, color: "#2563eb", letterSpacing: "0.12em", marginBottom: 4 }}>✦ AI INSIGHT</div>
+    <div style={{ fontSize: 13, color: "#b0cceb", lineHeight: 1.65 }}>{children}</div>
+  </div>
+);
+
+const Pill = ({ children, color = "blue" }) => {
+  const m = {
+    blue:   ["rgba(59,130,246,0.12)",  "#93c5fd"],
+    green:  ["rgba(34,197,94,0.12)",   "#86efac"],
+    amber:  ["rgba(245,158,11,0.12)",  "#fcd34d"],
+    slate:  ["rgba(100,116,139,0.12)", "#94a3b8"],
+    purple: ["rgba(167,139,250,0.12)", "#c4b5fd"],
+  };
+  const [bg, text] = m[color] || m.blue;
+  return (
+    <span style={{ background: bg, color: text, fontSize: 10, fontWeight: 700,
+      padding: "2px 9px", borderRadius: 20, letterSpacing: "0.04em", whiteSpace: "nowrap" }}>
+      {children}
+    </span>
+  );
+};
+
+const Div = ({ gap = 24 }) => (
+  <div style={{ height: 1, background: "rgba(255,255,255,0.055)", margin: `${gap}px 0` }} />
+);
+
+const SLabel = ({ children }) => (
+  <div style={{ fontSize: 9, fontWeight: 800, color: "#243857", letterSpacing: "0.13em",
+    marginBottom: 12, textTransform: "uppercase" }}>
+    {children}
+  </div>
+);
+
+const RecBadge = ({ level }) => {
+  const m = {
+    high:     ["#22c55e", "Favorable"],
+    moderate: ["#f59e0b", "Moderate"],
+    unknown:  ["#64748b", "Unknown"],
+    check:    ["#3b82f6", "Research needed"],
+  };
+  const [c, label] = m[level] || m.unknown;
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5,
+      background: `${c}16`, border: `1px solid ${c}30`,
+      borderRadius: 20, padding: "2px 9px" }}>
+      <span style={{ width: 5, height: 5, borderRadius: "50%", background: c, display: "inline-block" }} />
+      <span style={{ fontSize: 10, fontWeight: 700, color: c, letterSpacing: "0.05em" }}>
+        {label.toUpperCase()}
+      </span>
+    </span>
+  );
+};
+
+// ═══════════════════════════════════════════
+// TOP NAV
+// ═══════════════════════════════════════════
+
+const TopNav = () => (
+  <nav style={{
+    position: "sticky", top: 0, zIndex: 50, height: 64,
+    display: "flex", alignItems: "center", padding: "0 22px", gap: 14,
+    background: "rgba(6,14,29,0.97)", backdropFilter: "blur(12px)",
+    borderBottom: "1px solid rgba(255,255,255,0.065)",
+  }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 9, flexShrink: 0 }}>
+      <div style={{
+        width: 30, height: 30, borderRadius: 7,
+        background: "linear-gradient(145deg, #e53e3e, #c53030)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 13, fontWeight: 900, color: "#fff",
+      }}>C</div>
+      <span style={{ fontSize: 10, fontWeight: 800, color: "#3a4f6a", letterSpacing: "0.1em" }}>CHANGE.ORG</span>
+    </div>
+
+    <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
+
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ fontSize: 9, color: "#243857", fontWeight: 800, letterSpacing: "0.09em", marginBottom: 2 }}>YOUR CAMPAIGN</div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: "#dce8f5", whiteSpace: "nowrap",
+        overflow: "hidden", textOverflow: "ellipsis", maxWidth: 540 }}>
+        {D.title}
+      </div>
+    </div>
+
+    <div style={{
+      display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
+      background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.22)",
+      borderRadius: 20, padding: "4px 12px",
+    }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3b82f6", display: "inline-block" }}
+        className="pulse-dot" />
+      <span style={{ fontSize: 10, fontWeight: 800, color: "#7db4f8", letterSpacing: "0.05em" }}>PHASE 2 · BUILD</span>
+    </div>
+
+    <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+      <div style={{ position: "relative", color: "#3a4f6a", cursor: "pointer" }}>
+        <IBell />
+        <div style={{
+          position: "absolute", top: 0, right: -1,
+          width: 7, height: 7, borderRadius: "50%",
+          background: "#f59e0b", border: "1.5px solid #060e1d",
+        }} />
+      </div>
+      <div style={{
+        width: 32, height: 32, borderRadius: "50%", cursor: "pointer",
+        background: "linear-gradient(145deg, #2563eb, #7c3aed)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 12, fontWeight: 900, color: "#fff",
+      }}>J</div>
+    </div>
+  </nav>
+);
+
+// ═══════════════════════════════════════════
+// AI BANNER
+// ═══════════════════════════════════════════
+
+const AiBanner = () => (
+  <div style={{
+    background: "linear-gradient(135deg, rgba(30,58,138,0.22) 0%, rgba(109,40,217,0.1) 100%)",
+    borderBottom: "1px solid rgba(59,130,246,0.14)",
+    padding: "11px 22px",
+    display: "flex", alignItems: "center", gap: 12,
+  }}>
+    <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#3b82f6", display: "inline-block", flexShrink: 0 }}
+      className="pulse-dot" />
+    <span style={{ fontSize: 13, color: "#87b5ee", fontStyle: "italic", lineHeight: 1.5, flex: 1 }}>
+      "You're in Phase 2 of 4. The Senate Judiciary Committee is in session through May — this is your window to drive constituent pressure. Here's what matters today."
+    </span>
+    <span style={{ fontSize: 9, fontWeight: 800, color: "#243857", letterSpacing: "0.12em", flexShrink: 0 }}>THE BRIEF · AI</span>
+  </div>
+);
+
+// ═══════════════════════════════════════════
+// SECTION 1 — THE BRIEF
+// ═══════════════════════════════════════════
+
+const BriefSection = ({ onNav }) => {
+  const [whyOpen, setWhyOpen] = useState(false);
+
+  const rows = [
+    { Icon: IMap,    accent: "#3b82f6", label: "Roadmap",       target: "roadmap",
+      text: "You're in Phase 2. Signature velocity is strong — but no congressional outreach has started yet." },
+    { Icon: IZap,    accent: "#f59e0b", label: "Next Move",     target: "roadmap",
+      text: "Contact your senators' offices with constituent stories. The committee is in session now." },
+    { Icon: IUsers,  accent: "#22c55e", label: "Your Network",  target: "network",
+      text: "4 national organizations are running parallel campaigns on sentencing reform. You're not fighting alone." },
+    { Icon: IShield, accent: "#a78bfa", label: "Decision Maker",target: "intel",
+      text: "Sen. Dick Durbin (Chair, Senate Judiciary) has co-sponsored sentencing reform bills before. Here's how to reach him." },
+  ];
+
+  return (
+    <div style={{ maxWidth: 860, margin: "0 auto", padding: "30px 22px" }}>
+
+      {/* Stats */}
+      <div style={{
+        display: "flex", borderRadius: 10, overflow: "hidden",
+        background: "#0c1a31", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 26,
+      }}>
+        {[
+          { val: "4,847",   sub: "Signatures",    c: "#3b82f6" },
+          { val: "34",      sub: "Days running",  c: "#a78bfa" },
+          { val: "50",      sub: "States reached",c: "#22c55e" },
+          { val: "Phase 2", sub: "of 4 · Build",  c: "#f59e0b" },
+        ].map((s, i) => (
+          <div key={i} style={{
+            flex: 1, padding: "14px 0", textAlign: "center",
+            borderRight: i < 3 ? "1px solid rgba(255,255,255,0.055)" : "none",
+          }}>
+            <div style={{ fontSize: 21, fontWeight: 800, color: s.c, letterSpacing: "-0.02em" }}>{s.val}</div>
+            <div style={{ fontSize: 10, color: "#3a4f6a", fontWeight: 700, marginTop: 2 }}>{s.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Summary rows */}
+      <SLabel>Campaign Intelligence</SLabel>
+      <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 26 }}>
+        {rows.map((r, i) => (
+          <div key={i}
+            className="summary-row row-hover"
+            style={{
+              display: "flex", alignItems: "center", gap: 14,
+              padding: "13px 16px", borderRadius: 10, cursor: "pointer",
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.045)",
+            }}
+            onClick={() => onNav && onNav(r.target)}
+          >
+            <div style={{
+              width: 35, height: 35, borderRadius: 9, flexShrink: 0,
+              background: `${r.accent}14`, border: `1px solid ${r.accent}25`,
+              display: "flex", alignItems: "center", justifyContent: "center", color: r.accent,
+            }}><r.Icon /></div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 9, fontWeight: 800, color: "#243857", letterSpacing: "0.1em", marginBottom: 3 }}>
+                {r.label.toUpperCase()}
+              </div>
+              <div style={{ fontSize: 13.5, color: "#bdcfe6", lineHeight: 1.45 }}>{r.text}</div>
+            </div>
+            <div className="chevron-reveal" style={{ color: "#2563eb", flexShrink: 0 }}><IChevR /></div>
+          </div>
+        ))}
+      </div>
+
+      <Div gap={0} />
+
+      {/* Next Move */}
+      <div style={{ marginTop: 26 }}>
+        <SLabel>Your Next Move</SLabel>
+        <div style={{
+          background: "linear-gradient(135deg, rgba(30,58,138,0.14) 0%, rgba(109,40,217,0.07) 100%)",
+          border: "1px solid rgba(59,130,246,0.2)", borderRadius: 12, padding: 22,
+        }}>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start", marginBottom: 16 }}>
+            <div style={{
+              width: 42, height: 42, borderRadius: 11, flexShrink: 0,
+              background: "rgba(245,158,11,0.13)", border: "1px solid rgba(245,158,11,0.25)",
+              display: "flex", alignItems: "center", justifyContent: "center", color: "#f59e0b",
+            }}>
+              <IZap />
+            </div>
+            <div>
+              <h3 style={{ margin: "0 0 9px", fontSize: 18, fontWeight: 800, color: "#f1f5f9", lineHeight: 1.3 }}>
+                Send constituent stories to the Senate Judiciary Committee
+              </h3>
+              <p style={{ margin: 0, fontSize: 13.5, color: "#6e8eae", lineHeight: 1.75 }}>
+                The Senate Judiciary Committee is in active session through May — that's your window. Constituent letters with personal stories have moved votes on sentencing reform before, and your campaign now spans all 50 states. The committee chair has co-sponsored reform; what moves him is constituent urgency at scale.
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 9, marginBottom: 14, flexWrap: "wrap" }}>
+            <button className="btn-primary">Draft a letter to the committee</button>
+            <button className="btn-secondary">Find constituent co-signers</button>
+          </div>
+
+          <button className="btn-ghost" onClick={() => setWhyOpen(!whyOpen)}>
+            {whyOpen ? <IChevU /> : <IChevD />}
+            {whyOpen ? "Collapse" : "Why now?"}
+          </button>
+
+          {whyOpen && (
+            <div className="fade-in" style={{
+              marginTop: 14, padding: "16px 17px",
+              background: "rgba(0,0,0,0.28)", borderRadius: 9,
+              border: "1px solid rgba(59,130,246,0.12)",
+            }}>
+              <p style={{ margin: "0 0 10px", fontSize: 13, color: "#6e8eae", lineHeight: 1.7 }}>
+                <strong style={{ color: "#b0cceb" }}>The committee window closes in May.</strong> Once they recess, pending matters typically don't resurface until fall — acting now vs. June is the difference between this Congress and next year.
+              </p>
+              <p style={{ margin: "0 0 10px", fontSize: 13, color: "#6e8eae", lineHeight: 1.7 }}>
+                <strong style={{ color: "#b0cceb" }}>Sen. Durbin has a record you can reference directly.</strong> He co-sponsored the SAFE Justice Act in 2021. Your letter isn't a cold ask — it's an appeal to a position he's already staked publicly.
+              </p>
+              <p style={{ margin: 0, fontSize: 13, color: "#6e8eae", lineHeight: 1.7 }}>
+                <strong style={{ color: "#b0cceb" }}>Your geographic spread is leverage.</strong> Strong signatures in New York, California, and Georgia — states with Judiciary Committee members. Use it explicitly in the letter.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════
+// SECTION 2 — MY ROADMAP
+// ═══════════════════════════════════════════
+
+const RoadmapSection = () => {
+  const effortColor = { light: "#22c55e", medium: "#f59e0b", heavy: "#ef4444" };
+  const statusCfg = {
+    done:   { dot: "#22c55e", pill: "green",  label: "Complete"    },
+    active: { dot: "#f59e0b", pill: "amber",  label: "In progress" },
+    todo:   { dot: "#1a2c45", pill: "slate",  label: "Not started" },
+  };
+
+  return (
+    <div style={{ maxWidth: 860, margin: "0 auto", padding: "30px 22px" }}>
+
+      {/* Phase Arc */}
+      <SLabel>Campaign Phase</SLabel>
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ position: "relative" }}>
+          {/* Track */}
+          <div style={{
+            position: "absolute", top: 14, left: "12%", right: "12%",
+            height: 3, background: "rgba(255,255,255,0.055)", borderRadius: 2,
+          }}>
+            <div style={{
+              width: "33%", height: "100%",
+              background: "linear-gradient(90deg, #22c55e, #16a34a)", borderRadius: 2,
+            }} />
+          </div>
+          {/* Nodes */}
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            {D.phases.map((ph, i) => {
+              const future = !ph.done && !ph.cur;
+              return (
+                <div key={i} style={{ width: "25%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", marginBottom: 7,
+                    color: ph.cur ? "#3b82f6" : ph.done ? "#22c55e" : "#1a2c45" }}>
+                    PHASE {ph.n}
+                  </div>
+                  <div style={{
+                    width: ph.cur ? 18 : 13, height: ph.cur ? 18 : 13, borderRadius: "50%",
+                    position: "relative", zIndex: 2,
+                    background: ph.done ? "#22c55e" : ph.cur ? "#3b82f6" : "#0d1d38",
+                    border: `3px solid ${ph.cur ? "rgba(59,130,246,0.32)" : ph.done ? "rgba(34,197,94,0.28)" : "#1a2c45"}`,
+                    boxShadow: ph.cur ? "0 0 18px rgba(59,130,246,0.5)" : "none",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "#fff",
+                  }} className={ph.cur ? "pulse-dot" : ""}>
+                    {ph.done && <ICheck />}
+                  </div>
+                  <div style={{ marginTop: 11, textAlign: "center", maxWidth: 110 }}>
+                    <div style={{ fontSize: 14, fontWeight: ph.cur ? 800 : 600, marginBottom: 4,
+                      color: future ? "#1a2c45" : ph.cur ? "#f1f5f9" : "#4a6585" }}>{ph.name}</div>
+                    <div style={{ fontSize: 11, lineHeight: 1.45,
+                      color: future ? "#111e30" : "#243857" }}>{ph.desc}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ marginTop: 110 }}>
+          <AiCallout>
+            You're in <strong style={{ color: "#93c5fd" }}>Build (Phase 2)</strong>. Signature velocity is healthy — the Phase 2 unlock is congressional contact. That's what separates campaigns that get noticed from campaigns that get ignored.
+          </AiCallout>
+        </div>
+      </div>
+
+      <Div />
+
+      {/* Milestones */}
+      <div style={{ marginBottom: 26 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <SLabel>Rolling 30-Day Focus</SLabel>
+          <Pill color="amber">Day 34 · Build Phase</Pill>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+          {D.milestones.map((m, i) => {
+            const s = statusCfg[m.status];
+            return (
+              <div key={i} className="milestone-row" style={{
+                display: "flex", alignItems: "center", gap: 13, padding: "12px 16px", borderRadius: 10,
+                background: m.status === 'active' ? "rgba(245,158,11,0.04)" : "rgba(255,255,255,0.02)",
+                border: `1px solid ${m.status === 'active' ? "rgba(245,158,11,0.16)" : "rgba(255,255,255,0.045)"}`,
+              }}>
+                <div style={{
+                  width: 25, height: 25, borderRadius: "50%", flexShrink: 0,
+                  background: `${s.dot}18`, border: `2px solid ${s.dot}50`,
+                  display: "flex", alignItems: "center", justifyContent: "center", color: s.dot,
+                }}>
+                  {m.status === 'done'
+                    ? <ICheck />
+                    : m.status === 'active'
+                      ? <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#f59e0b", display: "block" }} />
+                      : <span style={{ width: 7, height: 7, borderRadius: "50%", border: "2px solid #1a2c45", display: "block" }} />}
+                </div>
+                <span style={{
+                  flex: 1, fontSize: 13.5, lineHeight: 1.4,
+                  color: m.status === 'done' ? "#243857" : "#b8cfe6",
+                  textDecoration: m.status === 'done' ? "line-through" : "none",
+                }}>{m.text}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: effortColor[m.effort], letterSpacing: "0.05em", flexShrink: 0 }}>
+                  {m.effort.toUpperCase()}
+                </span>
+                <Pill color={s.pill}>{s.label}</Pill>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <Div />
+
+      {/* Benchmark */}
+      <div>
+        <SLabel>How Your Campaign Compares</SLabel>
+        <AiCallout style={{ marginBottom: 14 }}>
+          Federal sentencing reform campaigns that reached <strong style={{ color: "#93c5fd" }}>10K signatures within 60 days</strong> were 3x more likely to receive a congressional response. You're at 4,847 with 26 days remaining. You're on track.
+        </AiCallout>
+        <div style={{ padding: "15px 18px", borderRadius: 10, background: "#0c1a31", border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 700, marginBottom: 9 }}>
+            <span style={{ color: "#3a4f6a" }}>YOUR CAMPAIGN</span>
+            <span style={{ color: "#22c55e" }}>BENCHMARK: 10K IN 60 DAYS</span>
+          </div>
+          <div style={{ height: 7, background: "rgba(255,255,255,0.05)", borderRadius: 4, position: "relative" }}>
+            <div style={{
+              position: "absolute", left: 0, top: 0,
+              width: `${(4847/10000)*100}%`, height: "100%",
+              background: "linear-gradient(90deg, #1d4ed8, #3b82f6)", borderRadius: 4,
+            }} />
+            <div style={{
+              position: "absolute", left: `${(4847/10000)*100}%`,
+              top: -3, height: 13, width: 2,
+              background: "#60a5fa", borderRadius: 1,
+            }} />
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginTop: 7 }}>
+            <span style={{ color: "#3b82f6", fontWeight: 700 }}>4,847 signatures · Day 34</span>
+            <span style={{ color: "#22c55e", fontWeight: 700 }}>10,000 signatures · Day 60</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════
+// SECTION 3 — MY NETWORK
+// ═══════════════════════════════════════════
+
+const NetworkSection = () => (
+  <div style={{ maxWidth: 860, margin: "0 auto", padding: "30px 22px" }}>
+
+    <SLabel>Layer 1 · Your Supporters</SLabel>
+
+    {/* Geo */}
+    <div className="card" style={{ padding: "17px 19px", marginBottom: 9 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <span style={{ color: "#3b82f6" }}><IGlobe /></span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#dce8f5" }}>Geographic Spread</span>
+        <Pill color="green">All 50 States</Pill>
+      </div>
+      <p style={{ margin: "0 0 11px", fontSize: 13, color: "#607e99", lineHeight: 1.65 }}>
+        Strong support in <strong style={{ color: "#b0cceb" }}>{D.geo.join(", ")}</strong> — key states for Senate pressure. Three of these states have senators on the Judiciary Committee.
+      </p>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {D.geo.map(s => (
+          <span key={s} style={{
+            padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700,
+            background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.18)", color: "#7db4f8",
+          }}>{s}</span>
+        ))}
+      </div>
+    </div>
+
+    {/* Notable signers */}
+    <div className="card" style={{ padding: "17px 19px", marginBottom: 9 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 11 }}>
+        <span style={{ color: "#a78bfa" }}><IStar /></span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#dce8f5" }}>Notable Signers</span>
+        <span style={{ fontSize: 10, color: "#243857" }}>surfaced by influence, not identity</span>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+        {D.signers.map((ns, i) => (
+          <div key={i} style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "8px 12px", borderRadius: 8, background: "rgba(255,255,255,0.025)",
+          }}>
+            <span style={{ fontSize: 13, color: "#b0cceb" }}>{ns.label}</span>
+            <span style={{
+              fontSize: 10, fontWeight: 700, padding: "2px 9px", borderRadius: 20,
+              background: `${ns.color}15`, color: ns.color, border: `1px solid ${ns.color}25`,
+            }}>{ns.tag}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Super supporter */}
+    <div className="card" style={{ padding: "17px 19px", marginBottom: 28 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 11 }}>
+        <span style={{ color: "#f59e0b" }}><IAward /></span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#dce8f5" }}>Super Supporter Spotlight</span>
+      </div>
+      <div style={{ borderLeft: "3px solid #f59e0b", paddingLeft: 14, marginBottom: 9 }}>
+        <p style={{ margin: 0, fontSize: 14, color: "#dce8f5", fontStyle: "italic", lineHeight: 1.7, fontFamily: "Georgia, serif" }}>
+          "My brother got 8 years for possession. No priors. The judge said his hands were tied. This has to change."
+        </p>
+      </div>
+      <div style={{ fontSize: 11, color: "#243857", fontWeight: 600 }}>
+        Commented · Shared · Drove 23 additional signatures from their network
+      </div>
+    </div>
+
+    <Div gap={0} />
+
+    {/* Layer 2 */}
+    <div style={{ marginTop: 26, marginBottom: 28 }}>
+      <SLabel>Layer 2 · The Broader Fight</SLabel>
+      <p style={{ fontSize: 13, color: "#3a4f6a", fontStyle: "italic", margin: "0 0 12px" }}>
+        Others are fighting the same fight. You're not the first, and you won't be the last.
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {D.petitions.map((p, i) => (
+          <div key={i} className="card row-hover" style={{
+            display: "flex", alignItems: "center", gap: 15, padding: "12px 17px", cursor: "pointer",
+          }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#c2d8ef", marginBottom: 3, lineHeight: 1.4 }}>{p.title}</div>
+              <div style={{ fontSize: 10, color: "#243857", fontWeight: 600 }}>{p.sigs} signatures</div>
+            </div>
+            <Pill color={p.status === "Won" ? "green" : "blue"}>{p.status}{p.status === "Won" ? " ✓" : ""}</Pill>
+            <button style={{
+              background: "rgba(59,130,246,0.09)", border: "1px solid rgba(59,130,246,0.18)",
+              borderRadius: 7, padding: "5px 10px", fontSize: 11, color: "#7db4f8",
+              cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap",
+            }}>Connect with starter</button>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <Div gap={0} />
+
+    {/* Layer 3 */}
+    <div style={{ marginTop: 26 }}>
+      <SLabel>Layer 3 · Relevant Organizations</SLabel>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {D.orgs.map((org, i) => (
+          <div key={i} className="card" style={{ display: "flex", alignItems: "center", gap: 13, padding: "13px 17px" }}>
+            <div style={{
+              width: 37, height: 37, borderRadius: 9, flexShrink: 0,
+              background: `${org.color}13`, border: `1px solid ${org.color}25`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 12, fontWeight: 900, color: org.color,
+            }}>{org.initial}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#dce8f5", marginBottom: 2 }}>{org.name}</div>
+              <div style={{ fontSize: 11, color: "#3a4f6a" }}>{org.role}</div>
+            </div>
+            <button style={{
+              background: "rgba(59,130,246,0.09)", border: "1px solid rgba(59,130,246,0.18)",
+              borderRadius: 7, padding: "5px 10px", fontSize: 11, color: "#7db4f8",
+              cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap",
+            }}>Learn how to reach them</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+// ═══════════════════════════════════════════
+// SECTION 4 — DECISION MAKER INTEL
+// ═══════════════════════════════════════════
+
+const IntelSection = () => (
+  <div style={{ maxWidth: 860, margin: "0 auto", padding: "30px 22px" }}>
+
+    <SLabel>Primary Decision Maker</SLabel>
+
+    <div className="card dm-bar" style={{ padding: 0, marginBottom: 24 }}>
+      <div style={{ padding: "22px 22px 20px" }}>
+        <div style={{ display: "flex", gap: 17, alignItems: "flex-start", marginBottom: 20 }}>
+          <div style={{
+            width: 58, height: 58, borderRadius: 13, flexShrink: 0,
+            background: "linear-gradient(145deg, #1e3a8a, #2563eb)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 22, fontWeight: 900, color: "#fff",
+          }}>D</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
+              <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.02em" }}>
+                {D.dmPrimary.name}
+              </h3>
+              <RecBadge level="high" />
+            </div>
+            <div style={{ fontSize: 12, color: "#3a4f6a", marginBottom: 7 }}>
+              {D.dmPrimary.party} · {D.dmPrimary.role}
+            </div>
+            <div style={{
+              fontSize: 12, color: "#4a6a8a", fontStyle: "italic",
+              background: "rgba(37,99,235,0.07)", borderRadius: 7, padding: "7px 10px",
+              border: "1px solid rgba(37,99,235,0.12)",
+            }}>"{D.dmPrimary.signal}"</div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 9, fontWeight: 800, color: "#1d3252", letterSpacing: "0.12em", marginBottom: 9 }}>
+            WHY THEY HAVE THE POWER TO CHANGE THIS
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {D.dmPrimary.points.map((pt, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#2563eb", marginTop: 7, flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: "#6e8eae", lineHeight: 1.55 }}>{pt}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <AiCallout style={{ marginBottom: 18 }}>
+          <strong style={{ color: "#93c5fd" }}>What it takes to get their attention: </strong>
+          {D.dmPrimary.asks}
+        </AiCallout>
+
+        <button className="btn-primary">Draft a letter to Sen. Durbin's office</button>
+      </div>
+    </div>
+
+    <SLabel>Also On Your Radar</SLabel>
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {D.dmSecondary.map((dm, i) => (
+        <div key={i} className="card" style={{ display: "flex", alignItems: "center", gap: 13, padding: "13px 17px" }}>
+          <div style={{
+            width: 37, height: 37, borderRadius: 9, flexShrink: 0,
+            background: "rgba(100,116,139,0.1)", border: "1px solid rgba(100,116,139,0.14)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 10, fontWeight: 800, color: "#475569",
+          }}>{dm.init}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#dce8f5", marginBottom: 2 }}>{dm.name}</div>
+            <div style={{ fontSize: 11, color: "#243857" }}>{dm.sub}</div>
+          </div>
+          <RecBadge level={dm.level} />
+          <button style={{
+            background: "rgba(59,130,246,0.09)", border: "1px solid rgba(59,130,246,0.18)",
+            borderRadius: 7, padding: "5px 10px", fontSize: 11, color: "#7db4f8",
+            cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap",
+          }}>{dm.action}</button>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// ═══════════════════════════════════════════
+// SECTION 5 — STORY SO FAR
+// ═══════════════════════════════════════════
+
+const StorySection = () => (
+  <div style={{ maxWidth: 860, margin: "0 auto", padding: "30px 22px" }}>
+
+    <SLabel>Campaign Narrative</SLabel>
+    <div className="card" style={{ padding: "22px 26px", marginBottom: 30 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
+        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#3b82f6", display: "inline-block" }}
+          className="pulse-dot" />
+        <span style={{ fontSize: 9, fontWeight: 800, color: "#1d3252", letterSpacing: "0.13em" }}>
+          AI-GENERATED · UPDATES DAILY
+        </span>
+      </div>
+      <p style={{
+        margin: 0, fontSize: 15, color: "#a8c3de",
+        lineHeight: 1.85, fontFamily: "Georgia, 'Times New Roman', serif",
+      }}>
+        "You launched 34 days ago after attending a sentencing hearing for a neighbor who received 10 years for a nonviolent drug offense. In your first week, 1,400 people signed — many sharing their own stories in the comments. By week two, a formerly incarcerated advocate with a national following shared the petition, driving a second wave. You're now at{" "}
+        <strong style={{ color: "#f1f5f9" }}>4,847 signatures across all 50 states</strong>, with particularly strong support in New York, California, and Georgia — three states with senators on the Judiciary Committee. The SAFE Justice Act is stalled in committee.{" "}
+        <strong style={{ color: "#f59e0b" }}>Your window is now.</strong>"
+      </p>
+    </div>
+
+    <Div gap={0} />
+
+    <div style={{ marginTop: 28 }}>
+      <SLabel>Turning Points</SLabel>
+      <div style={{ position: "relative", paddingLeft: 28 }}>
+        <div style={{
+          position: "absolute", left: 8, top: 6, bottom: 6,
+          width: 2, background: "rgba(255,255,255,0.05)", borderRadius: 1,
+        }} />
+        {D.timeline.map((tp, i) => (
+          <div key={i} style={{ position: "relative", paddingBottom: i < D.timeline.length - 1 ? 26 : 0 }}>
+            <div style={{
+              position: "absolute", left: -24, top: 2,
+              width: 14, height: 14, borderRadius: "50%", zIndex: 2,
+              background: tp.today ? "#f59e0b" : i < 2 ? "#22c55e" : "#2563eb",
+              border: `3px solid ${tp.today ? "rgba(245,158,11,0.22)" : i < 2 ? "rgba(34,197,94,0.18)" : "rgba(37,99,235,0.22)"}`,
+              boxShadow: tp.today ? "0 0 14px rgba(245,158,11,0.46)" : "none",
+            }} />
+            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", marginBottom: 4,
+              color: tp.today ? "#f59e0b" : "#1d3252" }}>
+              {tp.day.toUpperCase()}
+            </div>
+            <div style={{ fontSize: 14, lineHeight: 1.55,
+              color: tp.today ? "#dce8f5" : "#607e99",
+              fontWeight: tp.today ? 600 : 400 }}>
+              {tp.text}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+// ═══════════════════════════════════════════
+// VARIANT A — TABBED
+// ═══════════════════════════════════════════
+
+const TABS = [
+  { id: "brief",   label: "The Brief",           Icon: IZap    },
+  { id: "roadmap", label: "My Roadmap",           Icon: IMap    },
+  { id: "network", label: "My Network",           Icon: IUsers  },
+  { id: "intel",   label: "Decision Maker Intel", Icon: IShield },
+  { id: "story",   label: "Story So Far",         Icon: IBook   },
+];
+
+const VariantA = () => {
+  const [active, setActive] = useState("brief");
+
+  const content = {
+    brief:   <BriefSection onNav={setActive} />,
+    roadmap: <RoadmapSection />,
+    network: <NetworkSection />,
+    intel:   <IntelSection />,
+    story:   <StorySection />,
+  };
+
+  return (
+    <>
+      <div className="tab-sticky" style={{
+        background: "rgba(6,14,29,0.97)", backdropFilter: "blur(10px)",
+        borderBottom: "1px solid rgba(255,255,255,0.055)",
+        display: "flex", padding: "0 18px", overflowX: "auto",
+      }}>
+        {TABS.map(tab => {
+          const on = active === tab.id;
+          return (
+            <button key={tab.id} onClick={() => setActive(tab.id)} style={{
+              background: "none", border: "none",
+              borderBottom: on ? "2px solid #2563eb" : "2px solid transparent",
+              color: on ? "#f1f5f9" : "#3a4f6a",
+              padding: "14px 16px", fontSize: 13, fontWeight: on ? 700 : 500,
+              cursor: "pointer", whiteSpace: "nowrap",
+              display: "flex", alignItems: "center", gap: 7,
+              transition: "color 0.15s, border-color 0.15s",
+            }}
+            onMouseEnter={e => { if (!on) e.currentTarget.style.color = "#7a9ec4"; }}
+            onMouseLeave={e => { if (!on) e.currentTarget.style.color = "#3a4f6a"; }}
+            >
+              <span style={{ opacity: on ? 1 : 0.5 }}><tab.Icon /></span>
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+      <div key={active} className="fade-in">
+        {content[active]}
+      </div>
+    </>
+  );
+};
+
+// ═══════════════════════════════════════════
+// VARIANT B — COMMAND CENTER
+// ═══════════════════════════════════════════
+
+const CCCard = ({ title, Icon, iconColor, badge, children, fullWidth }) => {
+  const [exp, setExp] = useState(false);
+  return (
+    <div className="card" style={{
+      display: "flex", flexDirection: "column",
+      gridColumn: fullWidth ? "1 / -1" : undefined,
+    }}>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 9,
+        padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)",
+        background: "rgba(255,255,255,0.01)",
+      }}>
+        <div style={{
+          width: 27, height: 27, borderRadius: 7, flexShrink: 0,
+          background: `${iconColor}13`, border: `1px solid ${iconColor}25`,
+          display: "flex", alignItems: "center", justifyContent: "center", color: iconColor,
+        }}><Icon /></div>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#dce8f5", flex: 1 }}>{title}</span>
+        {badge && <Pill color="amber">{badge}</Pill>}
+        <button onClick={() => setExp(!exp)} style={{
+          background: exp ? "rgba(37,99,235,0.13)" : "rgba(255,255,255,0.04)",
+          border: `1px solid ${exp ? "rgba(37,99,235,0.28)" : "rgba(255,255,255,0.07)"}`,
+          borderRadius: 6, padding: "4px 9px",
+          fontSize: 10, fontWeight: 800, letterSpacing: "0.04em",
+          color: exp ? "#7db4f8" : "#3a4f6a", cursor: "pointer", transition: "all 0.15s",
+        }}>{exp ? "COLLAPSE ↑" : "EXPAND ↓"}</button>
+      </div>
+      <div style={{ padding: "14px 16px", flex: 1 }}>
+        {children(exp)}
+      </div>
+    </div>
+  );
+};
+
+const VariantB = () => (
+  <div style={{ padding: "18px 22px 40px" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, maxWidth: 1180, margin: "0 auto" }}>
+
+      {/* Card 1: The Brief */}
+      <CCCard title="The Brief" Icon={IZap} iconColor="#f59e0b" badge="4 signals today">
+        {(exp) => (
+          <>
+            {[
+              { Icon: IMap,    accent: "#3b82f6", label: "ROADMAP",        text: "Phase 2 — velocity strong, no congressional outreach started." },
+              { Icon: IZap,    accent: "#f59e0b", label: "NEXT MOVE",      text: "Contact senators with constituent stories. Committee in session now." },
+              { Icon: IUsers,  accent: "#22c55e", label: "NETWORK",        text: "4 national orgs running parallel campaigns. You're not alone." },
+              { Icon: IShield, accent: "#a78bfa", label: "DECISION MAKER", text: "Sen. Durbin (Chair) co-sponsored reform. Here's how to reach him." },
+            ].map((r, i) => (
+              <div key={i} style={{
+                display: "flex", gap: 10, alignItems: "flex-start",
+                paddingBottom: i < 3 ? 10 : 0, marginBottom: i < 3 ? 10 : 0,
+                borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.04)" : "none",
+              }}>
+                <span style={{ color: r.accent, flexShrink: 0, marginTop: 1 }}><r.Icon /></span>
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "#1d3252", letterSpacing: "0.1em", marginBottom: 2 }}>{r.label}</div>
+                  <div style={{ fontSize: 12, color: "#607e99" }}>{r.text}</div>
+                </div>
+              </div>
+            ))}
+            {exp && (
+              <div className="fade-in" style={{
+                marginTop: 13, padding: "13px 14px",
+                background: "linear-gradient(135deg, rgba(30,58,138,0.14), rgba(109,40,217,0.07))",
+                border: "1px solid rgba(59,130,246,0.18)", borderRadius: 9,
+              }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9", marginBottom: 6 }}>
+                  Send constituent stories to the Senate Judiciary Committee
+                </div>
+                <p style={{ fontSize: 12, color: "#607e99", lineHeight: 1.65, margin: "0 0 11px" }}>
+                  Committee in active session through May. Constituent letters have moved votes. 50-state spread is national leverage.
+                </p>
+                <button className="btn-primary" style={{ padding: "8px 14px", fontSize: 12 }}>Draft a letter to the committee</button>
+              </div>
+            )}
+          </>
+        )}
+      </CCCard>
+
+      {/* Card 2: My Roadmap */}
+      <CCCard title="My Roadmap" Icon={IMap} iconColor="#3b82f6" badge="Phase 2 of 4">
+        {(exp) => (
+          <>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 14, position: "relative" }}>
+              <div style={{ position: "absolute", top: 5, left: "6%", right: "6%", height: 2, background: "rgba(255,255,255,0.05)" }}>
+                <div style={{ width: "33%", height: "100%", background: "#22c55e" }} />
+              </div>
+              {D.phases.map((ph, i) => (
+                <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{
+                    width: ph.cur ? 13 : 9, height: ph.cur ? 13 : 9, borderRadius: "50%",
+                    zIndex: 2, position: "relative", marginBottom: 6,
+                    background: ph.done ? "#22c55e" : ph.cur ? "#3b82f6" : "#0d1d38",
+                    boxShadow: ph.cur ? "0 0 9px rgba(59,130,246,0.5)" : "none",
+                  }} className={ph.cur ? "pulse-dot" : ""} />
+                  <div style={{ fontSize: 10, fontWeight: ph.cur ? 800 : 500, textAlign: "center",
+                    color: ph.cur ? "#f1f5f9" : ph.done ? "#4a6585" : "#1a2c45" }}>
+                    {ph.name}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {D.milestones.slice(0, exp ? 5 : 3).map((m, i) => (
+              <div key={i} style={{
+                display: "flex", gap: 8, alignItems: "center",
+                padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.04)",
+              }}>
+                <div style={{
+                  width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+                  background: m.status === 'active' ? "#f59e0b" : m.status === 'done' ? "#22c55e" : "#1a2c45",
+                }} />
+                <span style={{ fontSize: 11, color: "#607e99", flex: 1, lineHeight: 1.35 }}>{m.text}</span>
+                <Pill color={m.status === 'active' ? 'amber' : m.status === 'done' ? 'green' : 'slate'}>
+                  {m.status === 'active' ? 'Active' : m.status === 'done' ? 'Done' : 'Todo'}
+                </Pill>
+              </div>
+            ))}
+            <AiCallout style={{ marginTop: 12 }}>
+              3x more likely to get congressional response at 10K in 60 days. You're on pace.
+            </AiCallout>
+          </>
+        )}
+      </CCCard>
+
+      {/* Card 3: My Network */}
+      <CCCard title="My Network" Icon={IUsers} iconColor="#22c55e">
+        {(exp) => (
+          <>
+            <div style={{ marginBottom: 11 }}>
+              <div style={{ fontSize: 9, fontWeight: 800, color: "#1d3252", letterSpacing: "0.1em", marginBottom: 7 }}>STRONG SUPPORT IN</div>
+              <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                {D.geo.map(s => <Pill key={s} color="blue">{s}</Pill>)}
+              </div>
+            </div>
+            <div style={{ borderLeft: "3px solid #f59e0b", paddingLeft: 11, marginBottom: 11 }}>
+              <p style={{ margin: 0, fontSize: 12, color: "#c2d8ef", fontStyle: "italic", lineHeight: 1.55 }}>
+                "My brother got 8 years for possession. No priors. The judge said his hands were tied."
+              </p>
+            </div>
+            {exp && (
+              <div className="fade-in">
+                <Div gap={11} />
+                <div style={{ fontSize: 9, fontWeight: 800, color: "#1d3252", letterSpacing: "0.1em", marginBottom: 7 }}>RELATED CAMPAIGNS</div>
+                {D.petitions.map((p, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <span style={{ fontSize: 11, color: "#607e99", flex: 1, paddingRight: 8, lineHeight: 1.35 }}>
+                      {p.title.length > 50 ? p.title.substring(0, 50) + "…" : p.title}
+                    </span>
+                    <Pill color={p.status === "Won" ? "green" : "blue"}>{p.sigs}</Pill>
+                  </div>
+                ))}
+                <Div gap={11} />
+                <div style={{ fontSize: 9, fontWeight: 800, color: "#1d3252", letterSpacing: "0.1em", marginBottom: 7 }}>ORGANIZATIONS</div>
+                {D.orgs.map((org, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <span style={{ fontSize: 12, color: org.color, fontWeight: 700, minWidth: 0 }}>{org.name}</span>
+                    <span style={{ fontSize: 10, color: "#243857", flex: 1 }}>{org.role}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ marginTop: 10, fontSize: 11, color: "#243857", fontStyle: "italic" }}>
+              4 national orgs working this issue. You're not fighting alone.
+            </div>
+          </>
+        )}
+      </CCCard>
+
+      {/* Card 4: Decision Maker Intel */}
+      <CCCard title="Decision Maker Intel" Icon={IShield} iconColor="#a78bfa">
+        {(exp) => (
+          <>
+            <div style={{ display: "flex", gap: 13, alignItems: "flex-start", marginBottom: 13 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 10, flexShrink: 0,
+                background: "linear-gradient(145deg, #1e3a8a, #2563eb)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 17, fontWeight: 900, color: "#fff",
+              }}>D</div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 3 }}>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: "#f1f5f9" }}>Sen. Dick Durbin</span>
+                  <RecBadge level="high" />
+                </div>
+                <div style={{ fontSize: 11, color: "#3a4f6a" }}>Chair, Senate Judiciary Committee</div>
+                <div style={{ fontSize: 11, color: "#22c55e", fontWeight: 700, marginTop: 2 }}>Co-sponsored SAFE Justice Act ✓</div>
+              </div>
+            </div>
+            {exp && (
+              <div className="fade-in" style={{ marginBottom: 13 }}>
+                {D.dmPrimary.points.map((pt, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#2563eb", marginTop: 6, flexShrink: 0 }} />
+                    <span style={{ fontSize: 11, color: "#607e99" }}>{pt}</span>
+                  </div>
+                ))}
+                <AiCallout style={{ marginTop: 11 }}>{D.dmPrimary.asks}</AiCallout>
+                <Div gap={11} />
+                <div style={{ fontSize: 9, fontWeight: 800, color: "#1d3252", letterSpacing: "0.1em", marginBottom: 7 }}>ALSO ON YOUR RADAR</div>
+                {D.dmSecondary.map((dm, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <span style={{ fontSize: 12, color: "#b0cceb", fontWeight: 600, flex: 1 }}>{dm.name}</span>
+                    <RecBadge level={dm.level} />
+                  </div>
+                ))}
+              </div>
+            )}
+            <button className="btn-primary" style={{ padding: "8px 14px", fontSize: 12, marginTop: 4 }}>
+              Draft a letter to Sen. Durbin
+            </button>
+          </>
+        )}
+      </CCCard>
+
+      {/* Card 5: Story So Far — full width */}
+      <CCCard title="Story So Far" Icon={IBook} iconColor="#f59e0b" fullWidth>
+        {(exp) => (
+          <>
+            <p style={{
+              margin: "0 0 16px", fontSize: 14, color: "#8fb4d4",
+              lineHeight: 1.8, fontFamily: "Georgia, serif",
+            }}>
+              "You launched 34 days ago after attending a sentencing hearing. Now at{" "}
+              <strong style={{ color: "#f1f5f9" }}>4,847 signatures across all 50 states</strong>,
+              with strong support in New York, California, and Georgia — states with senators on the Judiciary Committee.
+              The SAFE Justice Act is stalled.{" "}
+              <strong style={{ color: "#f59e0b" }}>Your window is now.</strong>"
+            </p>
+            <div style={{ position: "relative" }}>
+              <div style={{ position: "absolute", top: 6, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.05)" }} />
+              <div style={{ display: "flex", gap: 0 }}>
+                {D.timeline.map((tp, i) => (
+                  <div key={i} style={{ flex: 1, paddingTop: 18, paddingRight: 10, position: "relative" }}>
+                    <div style={{
+                      position: "absolute", top: 0, left: 0,
+                      width: 12, height: 12, borderRadius: "50%",
+                      background: tp.today ? "#f59e0b" : i < 2 ? "#22c55e" : "#2563eb",
+                      border: "2px solid #060e1d", zIndex: 1,
+                      boxShadow: tp.today ? "0 0 10px rgba(245,158,11,0.44)" : "none",
+                    }} />
+                    <div style={{ fontSize: 9, fontWeight: 800, color: tp.today ? "#f59e0b" : "#1d3252", letterSpacing: "0.08em", marginBottom: 4 }}>
+                      {tp.day.toUpperCase()}
+                    </div>
+                    <div style={{ fontSize: 11, color: tp.today ? "#a8c3de" : "#3a4f6a", lineHeight: 1.4 }}>
+                      {exp ? tp.text : (tp.text.length > 58 ? tp.text.substring(0, 58) + "…" : tp.text)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </CCCard>
+
+    </div>
+  </div>
+);
+
+// ═══════════════════════════════════════════
+// VARIANT SWITCHER
+// ═══════════════════════════════════════════
+
+const VariantSwitcher = ({ v, setV }) => (
+  <div style={{
+    position: "fixed", top: 13, right: 13, zIndex: 200,
+    display: "flex", gap: 3,
+    background: "rgba(6,14,29,0.97)", backdropFilter: "blur(12px)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: 10, padding: 3,
+    boxShadow: "0 4px 28px rgba(0,0,0,0.55)",
+  }}>
+    {[
+      { id: "A", label: "Variant A: Tabs" },
+      { id: "B", label: "Variant B: Command Center" },
+    ].map(opt => (
+      <button key={opt.id} onClick={() => setV(opt.id)} style={{
+        background: v === opt.id ? "#2563eb" : "transparent",
+        color: v === opt.id ? "#fff" : "#3a4f6a",
+        border: "none", borderRadius: 7, padding: "5px 11px",
+        fontSize: 11, fontWeight: 700, cursor: "pointer",
+        whiteSpace: "nowrap", letterSpacing: "0.02em",
+        transition: "background 0.15s, color 0.15s",
+      }}>{opt.label}</button>
+    ))}
+  </div>
+);
+
+// ═══════════════════════════════════════════
+// AGENTATION
+// ═══════════════════════════════════════════
+
+const AgentationBar = () => {
+  if (typeof Agentation !== "undefined") {
+    return React.createElement(Agentation, { endpoint: "http://localhost:4747" });
+  }
+  return null;
+};
+
+// ═══════════════════════════════════════════
+// APP
+// ═══════════════════════════════════════════
+
+const App = () => {
+  const [variant, setVariant] = useState("A");
+  return (
+    <div style={{ minHeight: "100vh", background: "#060e1d" }}>
+      <TopNav />
+      <AiBanner />
+      <div key={variant} className="fade-in">
+        {variant === "A" ? <VariantA /> : <VariantB />}
+      </div>
+      <VariantSwitcher v={variant} setV={setVariant} />
+      <AgentationBar />
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

@@ -1,0 +1,3035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Victory Paths — Change.org Campaign Co-Pilot</title>
+  <style>
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-Thin.ttf') format('truetype'); font-weight:100; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-ExtraLight.ttf') format('truetype'); font-weight:200; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-Light.ttf') format('truetype'); font-weight:300; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-Regular.ttf') format('truetype'); font-weight:400; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-Medium.ttf') format('truetype'); font-weight:500; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-SemiBold.ttf') format('truetype'); font-weight:600; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-Bold.ttf') format('truetype'); font-weight:700; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-ExtraBold.ttf') format('truetype'); font-weight:800; font-style:normal; font-display:swap; }
+    @font-face { font-family:'Commissioner'; src:url('/fonts/Commissioner-Black.ttf') format('truetype'); font-weight:900; font-style:normal; font-display:swap; }
+  </style>
+  <style>
+    /* ============================================
+       RESET & TOKENS
+    ============================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:        #e01a2b;
+      --red-light:  rgba(224,26,43,0.08);
+      --action:     #ffe600;
+      --action-dk:  #ffdb00;
+      --blue:       #2563eb;
+      --blue-dark:  #1e3a8a;
+      --blue-light: #eff6ff;
+      --green:      #059669;
+      --white:      #ffffff;
+      --gray-50:    #f8fafc;
+      --gray-100:   #f1f5f9;
+      --gray-200:   #e2e8f0;
+      --gray-300:   #cbd5e1;
+      --gray-400:   #94a3b8;
+      --gray-500:   #64748b;
+      --gray-700:   #334155;
+      --gray-900:   #0f172a;
+      --nav-h:      4rem;
+      --serif:      'Commissioner', system-ui, sans-serif;
+      --sans:       'Commissioner', system-ui, sans-serif;
+      --mono:       'IBM Plex Mono', monospace;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--sans);
+      background: var(--gray-100);
+      color: var(--gray-900);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ============================================
+       APP SHELL
+    ============================================ */
+    #app {
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: var(--white);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* ============================================
+       SCREEN: URL INPUT
+    ============================================ */
+    #screen-url {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem 3rem;
+      gap: 1.25rem;
+    }
+    #screen-url.hidden { display: none; }
+
+    .brand-mark {
+      font-family: var(--serif);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--red);
+      letter-spacing: -0.02em;
+    }
+
+    .url-hed {
+      font-family: var(--serif);
+      font-size: 1.75rem;
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.15;
+      color: var(--gray-900);
+    }
+
+    .url-dek {
+      font-size: 0.9375rem;
+      color: var(--gray-500);
+      text-align: center;
+      line-height: 1.55;
+      max-width: 28ch;
+    }
+
+    .url-form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .field {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 10px;
+      font-size: 0.9375rem;
+      font-family: var(--sans);
+      color: var(--gray-900);
+      background: var(--gray-50);
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .field:focus { border-color: var(--blue); background: var(--white); }
+    .field::placeholder { color: var(--gray-400); }
+    .field.err { border-color: var(--red); }
+
+    .btn-red {
+      width: 100%;
+      padding: 0.9rem 1.5rem;
+      background: var(--action);
+      color: #2d2f37;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: var(--sans);
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      letter-spacing: 0.01em;
+    }
+    .btn-red:active { opacity: 0.88; transform: scale(0.99); }
+
+    .url-hint {
+      font-size: 0.8125rem;
+      color: var(--gray-400);
+      text-align: center;
+    }
+    .url-hint a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* ============================================
+       OVERLAY: PARSING
+    ============================================ */
+    .overlay-full {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(100%, 430px);
+      background: linear-gradient(180deg, #c4d0f5 0%, #e8f0ff 45%, #ffffeb 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.25rem;
+      z-index: 800;
+    }
+    .overlay-full.hidden { display: none; }
+
+    .spinner {
+      width: 2.75rem;
+      height: 2.75rem;
+      border: 3px solid var(--gray-200);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .overlay-hed {
+      font-family: var(--serif);
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+
+    .overlay-mono {
+      font-family: var(--mono);
+      font-size: 0.8125rem;
+      color: var(--gray-400);
+    }
+
+    .build-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: flex-start;
+    }
+
+    .build-step {
+      font-family: var(--mono);
+      font-size: 0.8125rem;
+      color: var(--gray-400);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: color 0.25s;
+    }
+    .build-step.active { color: var(--gray-900); }
+    .build-step.done { color: var(--green); }
+    .step-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    /* ============================================
+       SCREEN: PATH MODAL (FULL, NON-DISMISSIBLE)
+    ============================================ */
+    #screen-path {
+      position: absolute;
+      inset: 0;
+      background: var(--white);
+      z-index: 700;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    #screen-path.hidden { display: none; }
+
+    .path-sticky-top {
+      padding: 1.75rem 1.5rem 1rem;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 0.625rem;
+      font-weight: 600;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.5rem;
+    }
+
+    .path-hed {
+      font-family: var(--serif);
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      line-height: 1.15;
+      margin-bottom: 0.5rem;
+    }
+
+    .path-dek {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      line-height: 1.55;
+    }
+
+    .path-cards {
+      padding: 1rem 1.25rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .path-card {
+      border: 1.5px solid var(--gray-200);
+      border-radius: 14px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    }
+    .path-card:hover { border-color: var(--red); box-shadow: 0 2px 14px rgba(224,26,43,0.09); }
+    .path-card.selected {
+      border: 2.5px solid transparent;
+      background:
+        linear-gradient(#fff, #fff) padding-box,
+        linear-gradient(135deg, #1d4ed8 0%, #60a5fa 100%) border-box;
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.14), 0 6px 28px rgba(37,99,235,0.16);
+      transform: scale(1.012);
+    }
+
+    .path-card-top {
+      display: flex;
+      gap: 0.875rem;
+      align-items: flex-start;
+    }
+
+    .path-ico {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+    .ico-red  { background: var(--red-light); }
+    .ico-blue { background: var(--blue-light); }
+    .ico-grn  { background: rgba(5,150,105,0.08); }
+
+    .path-name {
+      font-family: var(--serif);
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      line-height: 1.2;
+    }
+    .path-tag { font-size: 0.8125rem; color: var(--gray-500); margin-top: 0.125rem; }
+
+    /* Milestone timeline replacing bullet list */
+    .path-milestones { list-style: none; display: flex; flex-direction: column; gap: 0; padding: 0; }
+    .path-milestone {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      position: relative; padding-bottom: 0.75rem;
+    }
+    .path-milestone:last-child { padding-bottom: 0; }
+    .path-milestone:not(:last-child)::after {
+      content: ''; position: absolute;
+      left: 0.5rem; top: 1.25rem; bottom: 0;
+      width: 1.5px; background: var(--gray-200);
+    }
+    .ms-dot {
+      width: 1.125rem; height: 1.125rem; border-radius: 50%;
+      background: var(--blue); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.5rem; font-weight: 700; font-family: var(--mono);
+      flex-shrink: 0; position: relative; z-index: 1; margin-top: 0.0625rem;
+    }
+    .ms-text { font-size: 0.875rem; color: var(--gray-700); line-height: 1.45; }
+
+    /* keep .path-blist for legacy, won't be used */
+    .path-blist { list-style: none; }
+    .path-blist li { font-size: 0.875rem; color: var(--gray-700);
+      padding-left: 1.25rem; position: relative; line-height: 1.45; }
+    .path-blist li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--red);
+      font-size: 0.75rem;
+      top: 0.1em;
+    }
+
+    .btn-choose {
+      margin-top: .5rem;
+      width: 100%;
+      padding: 0.8125rem;
+      background: var(--action);
+      color: #2d2f37;
+      border: none;
+      border-radius: 100px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      font-family: var(--sans);
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: opacity 0.15s;
+    }
+    .btn-choose:active { opacity: 0.85; }
+
+    .path-learn-link {
+      display: block; width: 100%; text-align: center; margin-top: .5rem;
+      font-size: .8125rem; font-weight: 500; color: var(--gray-500);
+      background: none; border: none; text-decoration: none; cursor: pointer;
+      font-family: var(--sans); transition: color .15s; padding: 0;
+    }
+    .path-learn-link:hover { color: var(--gray-900); }
+
+    /* ── Similar petitions bottom sheet ── */
+
+    .sim-handle { width: 2.5rem; height: 4px; background: var(--gray-200); border-radius: 2px; margin: .875rem auto .25rem; flex-shrink: 0; }
+    .sim-header { padding: .25rem 1.25rem .875rem; flex-shrink: 0; border-bottom: 1px solid var(--gray-100); }
+    .sim-hed { font-family: var(--serif); font-size: 1.0625rem; font-weight: 700; color: var(--gray-900); margin-bottom: .1875rem; }
+    .sim-sub { font-size: .8125rem; color: var(--gray-500); }
+    .sim-scroll { overflow-y: auto; padding: .875rem 1.25rem 2rem; display: flex; flex-direction: column; gap: .75rem; -webkit-overflow-scrolling: touch; }
+    .sim-card { border: 1.5px solid var(--gray-200); border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: .5rem; cursor: pointer; transition: border-color .15s; }
+    .sim-card:hover { border-color: var(--blue); }
+    .sim-card-top { display: flex; align-items: flex-start; gap: .75rem; }
+    .sim-img { width: 3rem; height: 3rem; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--gray-100); }
+    .sim-info { flex: 1; min-width: 0; }
+    .sim-title { font-size: .875rem; font-weight: 600; color: var(--gray-900); line-height: 1.3; margin-bottom: .25rem; }
+    .sim-meta { font-size: .75rem; color: var(--gray-500); }
+    .sim-tags { display: flex; gap: .375rem; flex-wrap: wrap; margin-top: .25rem; }
+    .sim-tag { font-family: var(--mono); font-size: .5rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; padding: .1875rem .4375rem; border-radius: 4px; }
+    .sim-tag-victory { background: rgba(5,150,105,.1); color: #059669; }
+    .sim-tag-path { background: var(--blue-light); color: var(--blue); }
+
+    /* ============================================
+       SCREEN: MAIN (HOME)
+    ============================================ */
+    #screen-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: calc(var(--nav-h) + 0.5rem);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    #screen-main.hidden { display: none; }
+
+    /* Simulated status bar */
+    .statusbar {
+      padding: 0.5rem 1.25rem 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+
+    /* App top bar */
+    .topbar {
+      padding: 0.625rem 1.25rem 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .campaign-img {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 9px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.375rem;
+      background: linear-gradient(135deg, #374151, #9ca3af);
+    }
+
+    .topbar-info { flex: 1; min-width: 0; }
+
+    .topbar-eyebrow {
+      font-family: var(--mono);
+      font-size: 0.5625rem;
+      font-weight: 500;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .topbar-title {
+      font-family: var(--serif);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      line-height: 1.25;
+    }
+
+    /* ── Action buttons row ── */
+    .action-row {
+      display: flex; align-items: flex-start; justify-content: space-around;
+      padding: .625rem 1rem .875rem;
+    }
+    .action-btn {
+      display: flex; flex-direction: column; align-items: center; gap: .375rem; flex: 1;
+    }
+    .action-circle {
+      width: 3.25rem; height: 3.25rem; border-radius: 50%;
+      border: 1.5px solid var(--gray-200); background: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .15s;
+    }
+    .action-circle:active { background: var(--gray-100); }
+    .action-circle.action-primary { background: var(--action); border-color: var(--action); }
+    .action-circle.action-primary:active { background: var(--action-dk); }
+    .action-lbl { font-size: .6875rem; font-weight: 500; color: var(--gray-700); font-family: var(--sans); text-align: center; }
+
+    .avatar {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 50%;
+      background: var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-size: 0.875rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ============================================
+       SIGNAL ALERT
+    ============================================ */
+    .signal-banner {
+      margin: 0.375rem 1.25rem;
+      background: var(--blue-light);
+      border: 1.5px solid rgba(37,99,235,0.18);
+      border-radius: 12px;
+      padding: 0.875rem 2.5rem 0.875rem 0.875rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      position: relative;
+      animation: slideDown 0.25s ease-out;
+    }
+    .signal-banner.hidden { display: none; }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .signal-ico { font-size: 1.25rem; flex-shrink: 0; }
+
+    .signal-body { flex: 1; min-width: 0; }
+
+    .signal-label {
+      font-family: var(--mono);
+      font-size: 0.5625rem;
+      font-weight: 500;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.25rem;
+    }
+
+    .signal-text {
+      font-size: 0.8125rem;
+      color: var(--gray-700);
+      line-height: 1.45;
+      margin-bottom: 0.4375rem;
+    }
+
+    .signal-cta {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      font-family: var(--sans);
+      color: #0f172a;
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 0.25rem 0.625rem;
+      cursor: pointer;
+      margin-top: 0.375rem;
+      text-decoration: none;
+    }
+
+    .signal-x {
+      position: absolute;
+      top: 0.625rem;
+      right: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--gray-400);
+      cursor: pointer;
+      background: none;
+      border: none;
+      line-height: 1;
+      padding: 0.125rem;
+    }
+
+    /* ============================================
+       MILESTONE BANNER
+    ============================================ */
+    .milestone-flash {
+      margin: 0 1.25rem 0.25rem;
+      background: linear-gradient(135deg, var(--action), #fbbf24);
+      color: #2d2f37;
+      text-align: center;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-family: var(--serif);
+      font-size: 1rem;
+      font-weight: 700;
+      animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .milestone-flash.hidden { display: none; }
+
+    @keyframes popIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    /* ============================================
+       HALF DIAL
+    ============================================ */
+    .dial-section {
+      padding: 0.25rem 1.25rem 0;
+    }
+
+    .dial-svg { width: 100%; display: block; }
+
+    /* ============================================
+       STATS ROW
+    ============================================ */
+    .stats-row {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0 1.25rem 1.25rem;
+    }
+
+    .stat-chip {
+      flex: 1;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 0.5625rem 0.5rem;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-family: var(--mono);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      display: block;
+    }
+
+    .stat-lbl {
+      font-size: 0.625rem;
+      color: var(--gray-500);
+      display: block;
+      margin-top: 0.125rem;
+      font-family: var(--sans);
+    }
+
+    /* ============================================
+       DIVIDER
+    ============================================ */
+    .row-divider { height: 6px; background: var(--gray-100); }
+
+    /* ============================================
+       PLAN SECTION
+    ============================================ */
+    .plan-wrap { padding: 1.25rem 1.25rem 0.75rem; }
+
+    .plan-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 0.1875rem;
+    }
+
+    .plan-hed {
+      font-family: var(--serif);
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .btn-ghost-sm {
+      font-size: 0.8125rem;
+      color: var(--gray-400);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: var(--sans);
+      padding: 0;
+    }
+    .btn-ghost-sm:hover { color: var(--gray-700); }
+
+    .plan-path-badge {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--blue);
+      font-weight: 600;
+      margin-bottom: 1.125rem;
+    }
+
+    /* ============================================
+       PHASE STEPPER
+    ============================================ */
+    .stepper {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 1.375rem;
+    }
+
+    .stepper-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      gap: 0.375rem;
+    }
+
+    .stepper-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 0.625rem;
+      left: 57%;
+      width: 86%;
+      height: 2px;
+      background: var(--gray-200);
+      z-index: 0;
+    }
+    .stepper-step.s-done:not(:last-child)::after { background: var(--blue); }
+    .stepper-step.s-active:not(:last-child)::after { background: linear-gradient(to right, var(--blue) 20%, var(--gray-200) 20%); }
+
+    .step-circle {
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      border: 2px solid var(--gray-200);
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.5rem;
+      font-weight: 700;
+      color: var(--gray-400);
+      position: relative;
+      z-index: 1;
+      font-family: var(--mono);
+    }
+    .stepper-step.s-active   .step-circle { background: var(--white); border-color: var(--blue); color: var(--blue); border-width: 2.5px; }
+    .stepper-step.s-done     .step-circle { background: var(--blue); border-color: var(--blue); color: var(--white); font-size: 0.625rem; }
+    /* Outline state — future phase clicked/browsed but not yet reached */
+    .stepper-step.s-selected .step-circle { border-color: var(--blue); color: var(--blue); background: var(--white); }
+
+    .step-phase-lbl {
+      font-family: var(--mono);
+      font-size: 0.5625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--gray-400);
+      text-align: center;
+    }
+    .stepper-step.s-active   .step-phase-lbl { color: var(--blue); font-weight: 600; }
+    .stepper-step.s-done     .step-phase-lbl { color: var(--blue); }
+    .stepper-step.s-selected .step-phase-lbl { color: var(--blue); font-weight: 600; }
+
+    /* ============================================
+       NEXT STEPS
+    ============================================ */
+    .next-steps-eyebrow {
+      font-family: var(--mono);
+      font-size: 0.5625rem;
+      font-weight: 500;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .step-item {
+      border: 1.5px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 0.875rem 1rem;
+      margin-bottom: 0.5625rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.875rem;
+      transition: opacity 0.35s, border-color 0.2s;
+    }
+    .step-item.is-done { opacity: 0.45; border-color: var(--gray-100); }
+
+    .step-cb {
+      width: 1.1875rem;
+      height: 1.1875rem;
+      border: 2px solid var(--gray-300);
+      border-radius: 5px;
+      flex-shrink: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, border-color 0.2s;
+      margin-top: 0.0625rem;
+    }
+    .step-cb.ticked { background: var(--green); border-color: var(--green); }
+    .step-cb.ticked::after { content: '✓'; color: white; font-size: 0.6875rem; font-weight: 700; }
+
+    .step-body { flex: 1; min-width: 0; }
+    .step-ttl { font-size: 0.9375rem; font-weight: 600; color: var(--gray-900); line-height: 1.3; margin-bottom: 0.1875rem; }
+    .do-this-next {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #2d2f37;
+      background: var(--action);
+      border-radius: 4px;
+      padding: 0.1875rem 0.4375rem;
+      margin-bottom: 0.375rem;
+    }
+    .step-ctx { font-size: 0.8125rem; color: var(--gray-500); line-height: 1.45; }
+    .step-done-msg { font-size: 0.8125rem; color: var(--green); font-weight: 500; margin-top: 0.25rem; animation: fadeUp 0.3s ease-out; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .all-done-state {
+      text-align: center;
+      padding: 1.5rem 0.5rem;
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      line-height: 1.6;
+    }
+    .all-done-state strong { color: var(--green); display: block; margin-top: 0.375rem; }
+
+    /* ============================================
+       FULL ROADMAP TOGGLE
+    ============================================ */
+    .roadmap-toggle-wrap {
+      border: 1.5px solid var(--gray-200);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+
+    .roadmap-toggle-row {
+      padding: 0.875rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .roadmap-toggle-lbl { font-size: 0.875rem; font-weight: 600; color: var(--gray-700); }
+
+    .chevron {
+      font-size: 0.6875rem;
+      color: var(--gray-400);
+      transition: transform 0.2s;
+      display: inline-block;
+    }
+    .chevron.up { transform: rotate(180deg); }
+
+    .roadmap-body {
+      border-top: 1px solid var(--gray-100);
+      padding: 1rem;
+      display: none;
+    }
+    .roadmap-body.open { display: block; }
+
+    .rm-phase { margin-bottom: 1rem; }
+    .rm-phase:last-child { margin-bottom: 0; }
+
+    .rm-phase-name {
+      font-family: var(--mono);
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--gray-500);
+      margin-bottom: 0.4375rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3125rem;
+    }
+    .rm-phase-name.cur { color: var(--blue); }
+
+    .rm-task {
+      font-size: 0.8125rem;
+      color: var(--gray-900);
+      font-weight: 600;
+      padding: 0.1875rem 0 0.1875rem 1rem;
+      position: relative;
+      line-height: 1.45;
+    }
+    .rm-task::before { content: '·'; position: absolute; left: 0.1875rem; color: var(--gray-400); }
+
+    /* ============================================
+       BOTTOM NAV
+    ============================================ */
+    #bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(100%, 430px);
+      height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+      background: var(--white);
+      border-top: 1px solid var(--gray-200);
+      display: none;
+      align-items: stretch;
+      z-index: 300;
+      box-shadow: 0 -1px 0 rgba(0,0,0,.06), 0 -4px 12px rgba(0,0,0,.04);
+    }
+
+    .nav-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      position: relative;
+    }
+
+    .nav-tab.active .nav-ico,
+    .nav-tab.active .nav-lbl { color: var(--blue); font-weight: 700; }
+
+    .nav-tab.off .nav-ico,
+    .nav-tab.off .nav-lbl { color: var(--gray-500); }
+    .nav-tab.off { pointer-events: none; }
+
+    .nav-ico { font-size: 1.1875rem; line-height: 1; display: flex; align-items: center; justify-content: center; }
+
+    .nav-lbl {
+      font-size: 0.5rem;
+      font-weight: 600;
+      font-family: var(--sans);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .nav-pip {
+      position: absolute;
+      top: 0.3125rem;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+
+    /* ============================================
+       FAB
+    ============================================ */
+    #fab {
+      position: fixed;
+      bottom: calc(var(--nav-h) + 0.875rem);
+      right: max(0.875rem, calc(50% - 215px + 0.875rem));
+      background: var(--blue-dark);
+      color: var(--white);
+      border: none;
+      border-radius: 100px;
+      padding: 0.5625rem 1rem 0.5625rem 0.875rem;
+      display: none;
+      align-items: center;
+      gap: 0.375rem;
+      cursor: pointer;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      font-family: var(--sans);
+      box-shadow: 0 4px 18px rgba(30,58,138,0.28);
+      z-index: 300;
+      transition: transform 0.15s, box-shadow 0.15s;
+      letter-spacing: 0.01em;
+    }
+    #fab:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(30,58,138,0.2); }
+    .fab-ico { font-size: 1rem; }
+
+    /* ============================================
+       CHAT BOTTOM SHEET
+    ============================================ */
+    #chat-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 600;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    #chat-overlay.hidden { display: none; }
+
+    .chat-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.38);
+    }
+
+    .chat-sheet {
+      position: relative;
+      z-index: 1;
+      background: var(--white);
+      border-radius: 20px 20px 0 0;
+      padding: 1.375rem 1.25rem calc(1.375rem + env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+      animation: sheetUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes sheetUp {
+      from { transform: translateY(60%); opacity: 0.6; }
+      to   { transform: translateY(0);   opacity: 1; }
+    }
+
+    .sheet-handle {
+      width: 2.5rem;
+      height: 4px;
+      background: var(--gray-200);
+      border-radius: 2px;
+      margin: -0.375rem auto 0;
+    }
+
+    .sheet-hed { font-family: var(--serif); font-size: 1.125rem; font-weight: 700; color: var(--gray-900); }
+    .sheet-sub { font-size: 0.875rem; color: var(--gray-500); margin-top: -0.5rem; }
+
+    .chat-chips {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .chat-chip {
+      padding: 0.375rem 0.75rem;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 100px;
+      font-size: 0.8125rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      background: var(--white);
+      font-family: var(--sans);
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .chat-chip:active { border-color: var(--blue); background: var(--blue-light); }
+
+    .chat-input-row { display: flex; gap: 0.625rem; }
+
+    .chat-input {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 10px;
+      font-size: 0.9375rem;
+      font-family: var(--sans);
+      outline: none;
+    }
+    .chat-input:focus { border-color: var(--blue); }
+
+    .chat-send {
+      width: 2.75rem;
+      height: 2.75rem;
+      background: var(--blue-dark);
+      border: none;
+      border-radius: 10px;
+      color: var(--white);
+      font-size: 1.0625rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ============================================
+       DEMO CONTROLS
+    ============================================ */
+    #demo-controls {
+      max-width: 430px;
+      width: 100%;
+      margin: 0 auto;
+      background: var(--gray-900);
+      color: var(--white);
+    }
+
+    .demo-toggle-btn {
+      width: 100%;
+      padding: 0.6875rem 1rem;
+      background: var(--gray-900);
+      color: var(--gray-400);
+      border: none;
+      font-size: 0.625rem;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .demo-inner {
+      padding: 0 1rem 1rem;
+      display: none;
+    }
+    .demo-inner.open { display: block; }
+
+    .demo-sub {
+      font-family: var(--mono);
+      font-size: 0.5625rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin: 0.875rem 0 0.5rem;
+    }
+
+    .demo-btn {
+      display: block;
+      width: 100%;
+      padding: 0.5625rem 0.75rem;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 7px;
+      color: var(--white);
+      font-size: 0.8125rem;
+      font-family: var(--sans);
+      text-align: left;
+      cursor: pointer;
+      margin-bottom: 0.375rem;
+      transition: background 0.15s;
+    }
+    .demo-btn:hover { background: rgba(255,255,255,0.13); }
+
+    /* ============================================
+       CONFETTI CANVAS
+    ============================================ */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* Pad */
+    .pad { height: 0.5rem; }
+
+    /* Saved petition card */
+    .saved-card {
+      width: 100%; background: var(--gray-50); border: 1.5px solid var(--gray-200);
+      border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: 0.375rem;
+    }
+    .saved-card.hidden { display: none; }
+    .saved-card-label { font-family: var(--mono); font-size: 0.5625rem; font-weight: 500; color: var(--blue); text-transform: uppercase; letter-spacing: 0.1em; }
+    .saved-card-title { font-family: var(--serif); font-size: 0.9375rem; font-weight: 700; color: var(--gray-900); line-height: 1.3; }
+    .saved-card-reset { font-size: 0.8125rem; color: var(--gray-400); cursor: pointer; text-align: center; margin-top: 0.125rem; }
+
+    /* ─── PROTOTYPE SWITCHER ─── */
+    #proto-switcher {
+      max-width: 430px;
+      width: 100%;
+      margin: 0 auto;
+      background: #111827;
+      display: flex;
+      align-items: center;
+    }
+    .proto-tab {
+      flex: 1; padding: 0.5625rem 0.5rem;
+      text-align: center; text-decoration: none;
+      color: #6b7280; font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.5625rem; letter-spacing: 0.09em; text-transform: uppercase; font-weight: 500;
+      transition: color 0.15s, background 0.15s;
+    }
+    .proto-tab.current { color: #ffffff; background: rgba(255,255,255,0.08); }
+    .proto-tab:not(.current):hover { color: #d1d5db; }
+    .proto-divider { width: 1px; height: 1.125rem; background: rgba(255,255,255,0.12); flex-shrink: 0; }
+
+/* H1 Focus card */
+.h1-focus-card { border:1.5px solid var(--gray-200);border-radius:16px;padding:1.25rem;margin-bottom:.875rem;background:var(--white); }
+.h1-focus-eyebrow { font-family:var(--mono);font-size:.5625rem;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem; }
+.h1-focus-title { font-family:var(--serif);font-size:1.25rem;font-weight:700;color:var(--gray-900);line-height:1.2;margin-bottom:.375rem; }
+.h1-focus-ctx { font-size:.875rem;color:var(--gray-500);line-height:1.45;margin-bottom:1rem; }
+.h1-focus-cta { width:100%;padding:.8125rem;background:var(--action);color:#2d2f37;border:none;border-radius:8px;font-size:.9375rem;font-weight:600;font-family:var(--sans);cursor:pointer;margin-bottom:.625rem;transition:opacity .15s; }
+.h1-focus-cta:active { opacity:.88; }
+.h1-focus-row { display:flex;align-items:center;justify-content:space-between; }
+.h1-focus-toggle { font-size:.8125rem;font-weight:500;color:var(--blue);background:none;border:none;cursor:pointer;font-family:var(--sans);padding:0; }
+.h1-focus-done { font-size:.8125rem;font-weight:500;color:var(--green);background:none;border:none;cursor:pointer;font-family:var(--sans);padding:0; }
+.h1-focus-exp { margin-top:.875rem;padding-top:.875rem;border-top:1px solid var(--gray-100);display:none; }
+.h1-focus-exp.open { display:block; }
+.h1-focus-detail { font-size:.875rem;color:var(--gray-700);line-height:1.5; }
+.h1-focus-why-wrap { border-left:2px solid var(--gray-200);padding-left:.75rem;margin-bottom:1rem; }
+.h1-focus-why-lbl { font-family:var(--mono);font-size:.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-400);margin-bottom:.25rem; }
+.h1-focus-why { font-size:.8125rem;color:var(--gray-500);line-height:1.45;font-style:italic; }
+/* H1 All tasks */
+.h1-tasks-hdr { display:flex;align-items:center;justify-content:space-between;padding:.6875rem 0;cursor:pointer;border-top:1px solid var(--gray-100); }
+.h1-tasks-lbl { font-size:.875rem;font-weight:500;color:var(--gray-700); }
+.h1-tasks-count { font-family:var(--mono);font-size:.75rem;color:var(--gray-400); }
+.h1-tasks-chev { font-size:.625rem;color:var(--gray-400);transition:transform .2s; }
+.h1-tasks-chev.open { transform:rotate(180deg); }
+.h1-tasks-list { display:none;padding-bottom:.5rem; }
+.h1-tasks-list.open { display:block; }
+.h1-task-group { margin-bottom:.75rem; }
+.h1-task-group-lbl { font-family:var(--mono);font-size:.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-400);padding:.25rem 0;border-bottom:1px solid var(--gray-100);margin-bottom:.25rem; }
+.h1-task-group-lbl.cur { color:var(--blue); }
+/* expandable task items */
+.h1-task-item { border-bottom:1px solid var(--gray-100); }
+.h1-task-item:last-child { border-bottom:none; }
+.h1-task-hdr { display:flex;align-items:flex-start;gap:.5rem;padding:.5rem 0;cursor:pointer;width:100%;background:none;border:none;text-align:left;font-family:inherit; }
+.h1-task-dot { width:.75rem;height:.75rem;border-radius:50%;border:1.5px solid var(--gray-300);flex-shrink:0;margin-top:.2rem; }
+.h1-task-dot.done { background:var(--green);border-color:var(--green); }
+.h1-task-dot.active { border-color:var(--blue);background:var(--blue-light); }
+.h1-task-name { font-size:.875rem;color:var(--gray-900);font-weight:600;line-height:1.35;flex:1; }
+.h1-task-name.active { color:var(--gray-900);font-weight:700; }
+.h1-task-name.done { color:var(--gray-400);font-weight:400;text-decoration:line-through; }
+.h1-task-chev { color:var(--gray-400);transition:transform .2s;flex-shrink:0;margin-top:.125rem; }
+.h1-task-chev.open { transform:rotate(180deg); }
+.h1-task-body { display:none;padding:.125rem 0 .875rem 1.25rem; }
+.h1-task-body.open { display:block; }
+.h1-task-body-ctx { font-size:.8125rem;color:var(--gray-700);line-height:1.5;margin-bottom:.5rem; }
+.h1-task-body-why { border-left:2px solid var(--gray-200);padding-left:.625rem;margin-bottom:.625rem; }
+.h1-task-body-why-lbl { font-family:var(--mono);font-size:.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-400);margin-bottom:.2rem; }
+.h1-task-body-why-txt { font-size:.8125rem;color:var(--gray-500);line-height:1.45;font-style:italic; }
+.h1-task-body-cta { display:inline-block;padding:.4375rem .875rem;background:var(--action);color:#2d2f37;border:none;border-radius:6px;font-size:.8125rem;font-weight:600;font-family:var(--sans);cursor:pointer; }
+.h1-task-body-cta.done-cta { background:var(--gray-100);color:var(--green);cursor:default; }
+/* signal focus card highlight + supporter card */
+.h1-focus-card.signal { border-color:#bfdbfe; background:#eff6ff; }
+.h1-signal-dismiss { display:none;font-size:.75rem;color:var(--gray-500);background:none;border:none;padding:0;cursor:pointer;font-family:var(--sans);margin-bottom:.5rem;text-decoration:underline;text-underline-offset:2px; }
+.h1-signal-dismiss:hover { color:var(--gray-700); }
+.h1-task-signal-item { background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:.5rem .75rem;margin-bottom:.5rem;cursor:pointer; }
+.h1-task-signal-item-tag { display:inline-flex;align-items:center;gap:.25rem;background:#dbeafe;color:#1d4ed8;font-family:var(--mono);font-size:.45rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.125rem .375rem;border-radius:99px;margin-bottom:.25rem; }
+.h1-task-signal-item-title { font-size:.8125rem;font-weight:700;color:var(--gray-900);line-height:1.3; }
+.h1-signal-tag { display:inline-flex;align-items:center;gap:.25rem;background:#dbeafe;color:#1d4ed8;font-family:var(--mono);font-size:.5rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.1875rem .4375rem;border-radius:99px;margin-bottom:.5rem; }
+.h1-supp-card { display:flex;align-items:center;gap:.5rem;padding:.5rem .625rem;background:var(--blue-light);border-radius:8px;margin-bottom:.5rem; }
+.h1-supp-photo { width:2.25rem;height:2.25rem;border-radius:50%;object-fit:cover;flex-shrink:0; }
+.h1-supp-name { font-size:.8125rem;font-weight:600;color:var(--gray-900);margin-bottom:.125rem; }
+.h1-supp-plat-list { font-size:.6875rem;color:var(--gray-500);line-height:1.5; }
+.h1-supp-total { font-family:var(--mono);font-size:.75rem;font-weight:700;color:var(--blue);white-space:nowrap;margin-left:auto; }
+.h1-draft-lbl { font-family:var(--mono);font-size:.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-400);margin-bottom:.25rem;margin-top:.5rem; }
+.h1-draft-post { background:var(--gray-50);border:1px solid var(--gray-200);border-radius:6px;padding:.5rem .625rem;font-size:.75rem;color:var(--gray-700);line-height:1.5; }
+  </style>
+</head>
+<body>
+
+<div id="proto-switcher">
+  <a class="proto-tab current" href="victory-paths.html">Victory Paths</a>
+  <div class="proto-divider"></div>
+  <a class="proto-tab" href="copilot-chat.html">Conversational Co-Pilot</a>
+</div>
+
+<div id="demo-controls" style="max-width:430px;width:100%;margin:0 auto;background:#111827;">
+  <button class="demo-toggle-btn" onclick="toggleDemo()">
+    <span>⚙ Demo Controls</span>
+    <span id="demo-chev">▼</span>
+  </button>
+  <div class="demo-inner" id="demo-inner">
+    <div class="demo-sub">Trigger Signals</div>
+    <button class="demo-btn" onclick="triggerSignal(0)">📱 Facebook Momentum Alert</button>
+    <button class="demo-btn" onclick="triggerSignal(1)">📰 Trending News Alert</button>
+    <button class="demo-btn" onclick="triggerSignal(2)">📅 City Commission Meeting Alert</button>
+    <div class="demo-sub">Supporter Sharing</div>
+    <button class="demo-btn" onclick="triggerShareActivity()">👥 Marcus W. — Top Supporter Alert</button>
+    <div class="demo-sub">Milestone Simulation</div>
+    <button class="demo-btn" onclick="simulateMilestone()">🎉 Hit next signature milestone</button>
+    <div class="demo-sub">Navigation</div>
+    <button class="demo-btn" onclick="dismissSignal()">↩ Back to next task</button>
+    <button class="demo-btn" onclick="resetToPath()">↩ Reset — show path selection</button>
+    <button class="demo-btn" onclick="fullReset()">↺ Full reset</button>
+    <div class="demo-sub">Change Petition</div>
+    <div style="display:flex;gap:.375rem;margin-bottom:.375rem">
+      <input type="url" id="demo-url-input" placeholder="https://www.change.org/p/..." style="flex:1;padding:.4375rem .625rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:.8125rem;font-family:sans-serif;outline:none">
+      <button class="demo-btn" style="flex-shrink:0;margin:0" onclick="loadFromDemoInput()">Load</button>
+    </div>
+  </div>
+</div>
+
+<canvas id="confetti-canvas"></canvas>
+
+<div id="app">
+
+  <!-- ======= URL INPUT SCREEN ======= -->
+  <div id="screen-url">
+    <div class="brand-mark">change.org</div>
+    <h1 class="url-hed">Your Campaign<br>Co-Pilot is ready.</h1>
+    <p class="url-dek">Paste your petition URL to generate a personalized victory roadmap powered by AI.</p>
+    <div class="url-form">
+      <input type="url" id="petition-url" class="field" placeholder="https://www.change.org/p/your-petition">
+      <button class="btn-red" onclick="handleUrlSubmit()">Analyze my petition →</button>
+    </div>
+    <div id="saved-card" class="saved-card hidden">
+      <div class="saved-card-label">Saved petition</div>
+      <div class="saved-card-title" id="saved-card-title">—</div>
+      <button class="btn-red" onclick="continueWithSaved()" style="margin-top:0.5rem">Continue with this petition →</button>
+      <a class="saved-card-reset" onclick="clearSaved()">Use a different petition</a>
+    </div>
+    <p class="url-hint" id="url-hint-row">Testing? <a onclick="loadDemo()">Use a sample petition</a></p>
+  </div>
+
+  <!-- ======= PARSING OVERLAY ======= -->
+  <div id="overlay-parse" class="overlay-full hidden">
+    <div class="spinner"></div>
+    <div class="overlay-hed">Reading your petition...</div>
+    <div class="overlay-mono" id="parse-status">Fetching petition data</div>
+  </div>
+
+  <!-- ======= PATH MODAL (NON-DISMISSIBLE) ======= -->
+  <div id="screen-path" class="hidden">
+
+    <!-- Petition card — top, above everything -->
+    <div id="petition-card-wrap" style="padding:1.25rem 1.25rem .625rem;"></div>
+
+    <div class="path-sticky-top">
+      <h2 class="path-hed">Choose your path to victory</h2>
+    </div>
+
+    <div class="path-cards" id="path-cards"></div>
+
+    <!-- Similar petitions — inside screen-path for reliable z-index -->
+    <div id="similar-backdrop" onclick="closeSimilar()" style="position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:10;display:none;"></div>
+    <div id="similar-sheet" style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:11;max-height:85%;display:none;flex-direction:column;box-shadow:0 -8px 40px rgba(0,0,0,.18);">
+      <div class="sim-header" style="padding:.875rem 1.25rem .75rem;border-bottom:1px solid #e2e8f0;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div class="sim-hed" id="sim-hed" style="font-family:var(--serif);font-size:1.0625rem;font-weight:700;color:#0f172a;margin-bottom:.125rem;">Petitions that took this path</div>
+          <div class="sim-sub" id="sim-sub" style="font-size:.8125rem;color:#64748b;">Real campaigns using this approach</div>
+        </div>
+        <button onclick="closeSimilar()" style="width:2rem;height:2rem;border-radius:50%;border:1.5px solid #e2e8f0;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:.875rem;color:#64748b;line-height:1;">✕</button>
+      </div>
+      <div class="sim-scroll" id="sim-scroll" style="overflow-y:auto;padding:.875rem 1.25rem 2rem;display:flex;flex-direction:column;gap:.75rem;-webkit-overflow-scrolling:touch;"></div>
+    </div>
+  </div>
+
+  <!-- ======= BUILDING OVERLAY ======= -->
+  <div id="overlay-build" class="overlay-full hidden">
+    <div class="spinner"></div>
+    <div class="overlay-hed">Your roadmap is being built...</div>
+    <div class="build-steps">
+      <div class="build-step" id="bs1"><span class="step-dot"></span>Analyzing petition signals</div>
+      <div class="build-step" id="bs2"><span class="step-dot"></span>Identifying decision maker</div>
+      <div class="build-step" id="bs3"><span class="step-dot"></span>Matching winning patterns</div>
+      <div class="build-step" id="bs4"><span class="step-dot"></span>Generating your roadmap</div>
+    </div>
+  </div>
+
+  <!-- ======= MAIN SCREEN ======= -->
+  <div id="screen-main" class="hidden">
+
+    <div class="statusbar">
+      <span id="sb-time">9:41</span>
+      <span style="letter-spacing:0.04em">●●●● ▲ 🔋</span>
+    </div>
+
+    <div class="topbar">
+      <div class="campaign-img" id="campaign-img">📋</div>
+      <div class="topbar-info">
+        <div class="topbar-eyebrow">Your petition</div>
+        <div class="topbar-title" id="topbar-title">—</div>
+      </div>
+    </div>
+
+    <div class="signal-banner hidden" id="signal-banner">
+      <div class="signal-ico" id="sig-ico">📈</div>
+      <div class="signal-body">
+        <div class="signal-label" id="sig-label">Live Signal</div>
+        <div class="signal-text"  id="sig-text">…</div>
+        <span class="signal-cta"  id="sig-cta" >Take action →</span>
+      </div>
+      <button class="signal-x" onclick="dismissSignal()">✕</button>
+    </div>
+
+    <!-- Milestone flash -->
+    <div class="milestone-flash hidden" id="milestone-flash">🎉 Milestone hit!</div>
+
+    <!-- Half Dial — all text lives inside the SVG -->
+    <div class="dial-section">
+      <svg class="dial-svg" viewBox="0 0 220 134" id="dial-svg" aria-label="Signature progress dial">
+        <defs>
+          <linearGradient id="dialGrad" x1="16" y1="106" x2="16" y2="106" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#0038bc"/>
+            <stop offset="100%" stop-color="#4771ff"/>
+          </linearGradient>
+        </defs>
+        <!-- Track -->
+        <path d="M 16 106 A 94 94 0 0 1 204 106"
+              fill="none" stroke="#e2e8f0" stroke-width="8" stroke-linecap="round"/>
+        <!-- Progress arc -->
+        <path id="dial-arc" d="M 16 106 A 94 94 0 0 1 204 106"
+              fill="none" stroke="url(#dialGrad)" stroke-width="8" stroke-linecap="round"
+              stroke-dasharray="295" stroke-dashoffset="295" style="transition:stroke-dashoffset .7s ease;"/>
+        <!-- Big signature count -->
+        <text id="dial-num" x="110" y="78"
+              font-family="Commissioner,monospace" font-size="32" font-weight="600"
+              fill="#111827" text-anchor="middle">0</text>
+        <!-- "signatures" sub-label -->
+        <text x="110" y="95"
+              font-family="Commissioner,sans-serif" font-size="9.5"
+              fill="#6b7280" text-anchor="middle">signatures</text>
+        <!-- Next goal — inside the arc -->
+        <text id="dial-goal-lbl" x="110" y="116"
+              font-family="Commissioner,monospace" font-size="8"
+              fill="#9ca3af" text-anchor="middle">Next goal: 100</text>
+        <!-- Start / end milestone labels -->
+        <text id="dial-lo" x="10" y="128"
+              font-family="Commissioner,monospace" font-size="8"
+              fill="#9ca3af" text-anchor="middle">0</text>
+        <text id="dial-hi" x="210" y="128"
+              font-family="Commissioner,monospace" font-size="8"
+              fill="#9ca3af" text-anchor="middle">100</text>
+      </svg>
+    </div>
+
+    <!-- Stats row — below dial -->
+    <div class="stats-row">
+      <div class="stat-chip">
+        <span class="stat-val" id="stat-cmt">—</span>
+        <span class="stat-lbl">Comments</span>
+      </div>
+      <div class="stat-chip">
+        <span class="stat-val" id="stat-prm">—</span>
+        <span class="stat-lbl">Promotions</span>
+      </div>
+      <div class="stat-chip">
+        <span class="stat-val" id="stat-views">—</span>
+        <span class="stat-lbl">Views</span>
+      </div>
+    </div>
+
+    <!-- Plan -->
+    <div class="plan-wrap">
+      <!-- Phase stepper only -->
+      <div class="stepper" id="stepper"></div>
+
+      <!-- Focus card — next single step -->
+      <div class="h1-focus-card" id="h1-focus-card">
+        <div id="h1-signal-tag" class="h1-signal-tag" style="display:none">⚡ Timely action — just added</div>
+        <div class="h1-focus-eyebrow" id="h1-focus-eyebrow">Next step</div>
+        <div class="h1-focus-title" id="h1-focus-title">—</div>
+        <div class="h1-focus-ctx" id="h1-focus-ctx">—</div>
+        <div class="h1-focus-why-wrap">
+          <div class="h1-focus-why-lbl">Why it matters</div>
+          <div class="h1-focus-why" id="h1-focus-why">—</div>
+        </div>
+        <button class="h1-focus-cta" onclick="h1FocusCTA()" id="h1-focus-cta-btn">Start this step →</button>
+      </div>
+
+      <!-- All tasks collapsible -->
+      <button class="h1-tasks-hdr" onclick="h1ToggleTasks()" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;font-family:inherit;">
+        <div><span class="h1-tasks-lbl">All tasks</span><span class="h1-tasks-count" id="h1-tasks-count"></span></div>
+        <span class="h1-tasks-chev" id="h1-tasks-chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+      </button>
+      <div class="h1-tasks-list" id="h1-tasks-list"></div>
+
+    </div>
+
+  </div><!-- /screen-main -->
+
+</div><!-- /app -->
+
+<!-- Bottom Nav -->
+<nav id="bottom-nav">
+  <div class="nav-tab active">
+    <div class="nav-pip"></div>
+    <div class="nav-ico">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </div>
+    <div class="nav-lbl">Plan</div>
+  </div>
+  <div class="nav-tab off">
+    <div class="nav-ico">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+    </div>
+    <div class="nav-lbl">Sharing</div>
+  </div>
+  <div class="nav-tab off">
+    <div class="nav-ico">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8l9-6 9 6v14"/><path d="M9 22v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/></svg>
+    </div>
+    <div class="nav-lbl">Decision maker</div>
+  </div>
+  <div class="nav-tab off">
+    <div class="nav-ico">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    </div>
+    <div class="nav-lbl">Post update</div>
+  </div>
+</nav>
+
+
+<script>
+/* ============================================
+   DATA
+============================================ */
+
+const TOPIC_IMGS = {
+  'flood infrastructure accountability': { bg:'linear-gradient(135deg,#1e40af,#60a5fa)', emoji:'🌊' },
+  'education':      { bg:'linear-gradient(135deg,#92400e,#f59e0b)', emoji:'📚' },
+  'environment':    { bg:'linear-gradient(135deg,#065f46,#34d399)', emoji:'🌿' },
+  'healthcare':     { bg:'linear-gradient(135deg,#0e7490,#67e8f9)', emoji:'🏥' },
+  'animal welfare': { bg:'linear-gradient(135deg,#6d28d9,#c4b5fd)', emoji:'🐾' },
+  'housing':        { bg:'linear-gradient(135deg,#1e3a5f,#6ea8fe)', emoji:'🏠' },
+  'public safety':  { bg:'linear-gradient(135deg,#78350f,#fcd34d)', emoji:'🚦' },
+};
+
+function setCampaignImg(petition) {
+  const el = document.getElementById('campaign-img');
+  if (!el) return;
+  if (petition.img) {
+    el.style.background = 'none';
+    el.innerHTML = '<img src="' + petition.img + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" alt="">';
+  } else {
+    const d = TOPIC_IMGS[petition.topic] || { bg:'linear-gradient(135deg,#374151,#9ca3af)', emoji:'📋' };
+    el.style.background = d.bg;
+    el.innerHTML = d.emoji;
+  }
+}
+
+/* ============================================
+   PETITION AI GENERATOR
+   Structured after the Change.org AI Guidance Prompt:
+   5 campaign buckets, mandatory "why this matters"
+   on every step, 5+ sharing actions spread across
+   phases, and 4 typed signal alerts.
+============================================ */
+function _slugToTitle(raw) {
+  return raw.replace(/[-_]+/g,' ').split(' ').filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' ')
+    .replace(/\b(And|Or|The|A|An|In|Of|For|To|At|By|On|With|From|Into)\b/g, m => m.toLowerCase())
+    .replace(/^./,c=>c.toUpperCase());
+}
+// Extracts a short issue noun from the title for use in step titles
+function _extractIssueNoun(title) {
+  const cleaned = title
+    .replace(/^(independent\s+)?/i,'')
+    .replace(/^(save|stop|protect|ban|end|fix|fund|keep|help|support|prevent|restore|reform|hold|demand|investigate|petition for an?\s+|calling for an?\s+)\s*/i,'')
+    .replace(/^(the|a|an)\s+/i,'');
+  return cleaned.split(' ').slice(0,4).join(' ');
+}
+function _detectMeta(words) {
+  const j = words.join(' ');
+  let loc='your community', dm='City Council';
+  const locs=[['new york','New York, NY'],['brooklyn','Brooklyn, NY'],['bronx','The Bronx, NY'],['los angeles','Los Angeles, CA'],['chicago','Chicago, IL'],['houston','Houston, TX'],['miami','Miami, FL'],['lakeland','Lakeland, FL'],['polk county','Polk County, FL'],['florida','Florida'],['texas','Texas'],['california','California'],['atlanta','Atlanta, GA'],['seattle','Seattle, WA'],['denver','Denver, CO'],['boston','Boston, MA'],['portland','Portland, OR'],['austin','Austin, TX'],['dallas','Dallas, TX'],['phoenix','Phoenix, AZ'],['detroit','Detroit, MI'],['washington dc','Washington, DC'],['dc ','Washington, DC'],['nashville','Nashville, TN'],['charlotte','Charlotte, NC'],['minneapolis','Minneapolis, MN'],['san francisco','San Francisco, CA'],['sf ','San Francisco, CA']];
+  for (const [k,v] of locs){ if(j.includes(k)){loc=v;break;} }
+  let topic='community accountability';
+  const rules=[
+    {keys:['school','teacher','student','educati','classroo','curricul','library'],topic:'public education',dm:'School Board'},
+    {keys:['park','tree','garden','green','trail','forest','wildlife','pollut','climate','clean air','environ','plastic','recycl'],topic:'environmental protection',dm:'Parks & Recreation Department'},
+    {keys:['police','crime','safety','gun','violen','justice','officer','shoot','brutali'],topic:'public safety & justice',dm:'Police Chief and City Council'},
+    {keys:['water','flood','drain','sewer','pump','pipe','pothole','road','bridge','infra','sidewalk'],topic:'infrastructure accountability',dm:'Public Works Department'},
+    {keys:['hous','rent','evict','afford','homeless','shelter','tenant','landlord','zoning'],topic:'affordable housing',dm:'City Housing Authority'},
+    {keys:['hospital','health','clinic','medic','doctor','nurse','mental health','wellness'],topic:'healthcare access',dm:'County Health Department'},
+    {keys:['animal','dog','cat','pet','wildlife','rescue','spay','neuter','breed'],topic:'animal welfare',dm:'Animal Services Department'},
+    {keys:['bus','transit','transport','subway','rail','bike','pedestrian','traffic'],topic:'public transit',dm:'Transit Authority'},
+    {keys:['invest','investigat','account','corrupt','transparen','audit','misconduct'],topic:'government accountability',dm:'City Council and Mayor'},
+    {keys:['wage','labor','worker','employ','salary','benefit','union','discrimin'],topic:'workers rights',dm:'Labor Board and City Council'},
+    {keys:['save','protect','preserv','histor','heritag','cultur','art','museum'],topic:'community preservation',dm:'City Council'},
+  ];
+  for (const r of rules){ if(r.keys.some(k=>j.includes(k))){topic=r.topic;dm=r.dm;break;} }
+  return {loc,topic,dm};
+}
+
+// Generates 14 steps following the 5-bucket structure from the AI Guidance Prompt:
+// Start strong (0-2) → Engage community & supporters (3-6) →
+// Decision maker engagement (7-9) → Public pressure & visibility (10-11) →
+// Delivery / impact / declare victory (12-13)
+function _genSteps(title, topic, dm, loc) {
+  const noun = _extractIssueNoun(title);
+  const city = loc.split(',')[0].trim();
+  const dmP  = dm.split(',')[0].split(' and ')[0].trim();
+
+  return [
+    // ── START STRONG ──────────────────────────────────────────────────
+    {
+      t: `Share your petition with ${city} contacts personally`,
+      c: `Text or email the petition to at least 20 people in ${city} who care about ${topic}. Ask each one to share with 2 others they know directly. Petitions that reach 100 signatures in the first two weeks are far more likely to get a decision-maker response or media attention — make this your first two-week target.`,
+      why: 'Personal shares convert 3× better than social posts — your existing network is your fastest path to the early volume that gets official attention.',
+      category: 'Start strong',
+    },
+    {
+      t: `Post in ${city} Facebook community groups`,
+      c: `Find and post in "${city} Community", "${city} Neighbors", and groups specifically related to ${topic}. Reshare every 2–3 days with fresh wording — don't post once and stop. Consistent visibility compounds over time.`,
+      why: 'Hyperlocal Facebook groups reach the people most directly affected by this issue, and repeated posts keep the petition in front of new eyes every few days.',
+      category: 'Start strong',
+    },
+    {
+      t: `Create a custom vanity link for your petition`,
+      c: `Set up a short, memorable link using Change.org's vanity URL tool. Add it to your email signature, your social bio, and share it verbally at community events. Then keep sharing it — every week, not just once.`,
+      why: 'A clean vanity link removes friction, looks more credible in print and in person, and makes it easy for any supporter to share verbally without looking it up.',
+      category: 'Start strong',
+    },
+    // ── ENGAGE COMMUNITY AND SUPPORTERS ──────────────────────────────
+    {
+      t: `Get ${city} residents to record video comments`,
+      c: `Reach out to people directly affected by ${topic} in ${city}. Ask them to leave a short video or written comment on the petition page: "How has this affected you personally?" Real stories create emotional proof that no statistic can match.`,
+      why: 'Video comments from affected community members are harder for decision makers to dismiss — and they drive reshares from people who see themselves in the story.',
+      category: 'Engage community and supporters',
+    },
+    {
+      t: `Send your first update to all signers`,
+      c: `Thank your signers by name, share the current signature count, and ask each one to forward the petition to just one more person in ${city} today. Keep the message short, personal, and specific about what you're asking for.`,
+      why: 'Signers who receive a personal thank-you update are 4× more likely to reshare — your existing supporters are your highest-converting channel at every stage.',
+      category: 'Engage community and supporters',
+    },
+    {
+      t: `Post a milestone update in ${city} Facebook groups`,
+      c: `When you hit a meaningful signature milestone, post in your most active ${city} Facebook groups: "We hit [X] signatures — help us reach [next goal]." Tag local news outlets and ask your supporters to reshare this specific post.`,
+      why: 'Public milestones signal real community momentum to both local press and decision makers — and asking for a reshare at this moment is your most effective mid-campaign call to action.',
+      category: 'Engage community and supporters',
+    },
+    {
+      t: `Ask your top supporters to share on Nextdoor in ${city}`,
+      c: `Identify your most engaged supporters and personally ask them to post the petition on Nextdoor neighborhoods across ${city}. Offer a short suggested post to make it easy — supporters are far more likely to share if you reduce the effort required.`,
+      why: 'Nextdoor reaches hyper-local residents who may not be active on Facebook but are deeply invested in what happens in their immediate neighborhood.',
+      category: 'Engage community and supporters',
+    },
+    // ── DECISION MAKER ENGAGEMENT ─────────────────────────────────────
+    {
+      t: `Contact ${dmP} directly`,
+      c: `Find the direct contact information for ${dm}. Send a specific, personal message with a concrete ask: what action do you want them to take, and by when? Request a written response or a meeting. Follow up within a week if you don't hear back.`,
+      why: 'A direct, specific ask with a named deadline creates a documented paper trail of accountability that a generic form submission cannot.',
+      category: 'Decision maker engagement',
+    },
+    {
+      t: `Submit a formal written comment about ${topic}`,
+      c: `Use the official website, public comment form, or physical mail to submit a formal written demand to ${dm}. Cite your petition's current signature count, name the affected ${city} residents, and list your specific asks clearly.`,
+      why: 'A formal written record is officially logged — it\'s far harder for decision makers to deny receiving or to ignore without public consequence.',
+      category: 'Decision maker engagement',
+    },
+    {
+      t: `Attend a public meeting and give official comment`,
+      c: `Find the next public meeting or hearing where ${dm} will be present. Prepare a focused 3-minute statement. Bring 2–3 ${city} residents to speak alongside you with their personal stories about how ${topic} has affected them.`,
+      why: 'In-person public comment creates a timestamped, official record that cannot be deleted — it forces formal acknowledgment on the record.',
+      category: 'Decision maker engagement',
+    },
+    // ── PUBLIC PRESSURE AND VISIBILITY ───────────────────────────────
+    {
+      t: `Pitch your story to local ${city} journalists`,
+      c: `Find reporters who cover ${topic} in ${city}. Lead your pitch with one compelling resident story — not statistics. Include 2–3 people willing to speak on record. Follow up once if you don't hear back within a few days.`,
+      why: 'One local news story can drive more signatures in 24 hours than weeks of organic social sharing — and it creates public pressure no official can dismiss.',
+      category: 'Public pressure and visibility',
+    },
+    {
+      t: `Distribute petition flyers with QR codes in ${city}`,
+      c: `Print and post flyers at community centers, faith institutions, local businesses, libraries, and public events throughout ${city}. Use Change.org's flyer tool to include a scannable QR code that links directly to the petition.`,
+      why: 'QR code flyers reach community members not active on social media — often the most directly affected voices, and the hardest to reach any other way.',
+      category: 'Public pressure and visibility',
+    },
+    // ── DELIVERY / IMPACT / DECLARE VICTORY ──────────────────────────
+    {
+      t: `Deliver your signatures at a public meeting`,
+      c: `Download your complete supporter list from Change.org and present it formally at a public meeting of ${dm}. Invite local ${city} media to the delivery moment. Bring a printed copy alongside the digital list for maximum visual impact.`,
+      why: 'A formal signature delivery creates a high-visibility accountability moment that officials must respond to on the official record — it turns your petition into a political event.',
+      category: 'Delivery / impact / declare victory',
+    },
+    {
+      t: `Issue a press release on delivery day`,
+      c: `Write and distribute a press release on the day you deliver signatures. Restate your core demands, quote affected ${city} residents, and send it to all local media contacts. Post it publicly across all your social channels simultaneously.`,
+      why: 'Same-day media coverage of your signature delivery maximizes the public cost of inaction — officials see the story and know their response is being watched in real time.',
+      category: 'Delivery / impact / declare victory',
+    },
+  ];
+}
+
+function _genRoadmapPhases(title, topic, dm, loc) {
+  const city = loc.split(',')[0].trim();
+  const dmP  = dm.split(',')[0].split(' and ')[0].trim();
+  return [
+    { name:'Spark', tasks:[
+      `Share your petition with ${city} contacts personally`,
+      `Post in ${city} Facebook community groups`,
+      `Create a custom vanity link for your petition`,
+    ]},
+    { name:'Build', tasks:[
+      `Get ${city} residents to record video comments`,
+      `Send your first update to all signers`,
+      `Post a milestone update in ${city} Facebook groups`,
+      `Ask your top supporters to share on Nextdoor in ${city}`,
+    ]},
+    { name:'Pressure', tasks:[
+      `Contact ${dmP} directly`,
+      `Submit a formal written comment about ${topic}`,
+      `Attend a public meeting and give official comment`,
+      `Pitch your story to local ${city} journalists`,
+      `Distribute petition flyers with QR codes in ${city}`,
+    ]},
+    { name:'Decision', tasks:[
+      `Deliver your signatures at a public meeting`,
+      `Issue a press release on delivery day`,
+      `Use Change.org's Declare Victory to document outcomes`,
+    ]},
+  ];
+}
+
+// Generates 4 typed signal alerts following the AI Guidance Prompt:
+// supporter_share, news_mention, signature_milestone, in_person_event
+function _genSignals(title, topic, dm, loc) {
+  const city = loc.split(',')[0].trim();
+  const dmP  = dm.split(',')[0].split(' and ')[0].trim();
+  return [
+    {
+      signal_type: 'supporter_share',
+      ico: '📱', lbl: 'Momentum Alert',
+      headline: `Your Facebook post is driving new signatures`,
+      getText: () => `Someone in a ${city} community Facebook group just shared your petition and brought in new signatures. This is the moment to post again in the same groups — momentum like this compounds fast when you jump on it right away.`,
+      cta: 'Share on Facebook now →', ctaColor: '#0d4dfb',
+      cta_action: 'open_sharing_tool',
+    },
+    {
+      signal_type: 'news_mention',
+      ico: '📰', lbl: 'News Mention',
+      headline: `A ${city} outlet just covered ${topic} — act now`,
+      getText: () => `A local ${city} news outlet just published a story on ${topic}. This is a rare opening — connect their reporter to your petition and the real ${city} residents behind it before the story cycle moves on.`,
+      cta: 'Reach out to media →', ctaColor: '#0d4dfb',
+      cta_action: 'open_decision_maker_tab',
+    },
+    {
+      signal_type: 'signature_milestone',
+      ico: '🎉', lbl: 'Milestone Reached',
+      headline: `${city} is showing up — thank your supporters`,
+      getText: () => `You just hit a real signature milestone — hundreds of ${city} residents have signed, and that number means something. Now is the perfect moment to send a thank-you update and ask signers to reshare before momentum fades.`,
+      cta: 'Send a supporter update →', ctaColor: '#e01a2b',
+      cta_action: 'open_post_update_tab',
+    },
+    {
+      signal_type: 'in_person_event',
+      ico: '📅', lbl: 'Upcoming Meeting',
+      headline: `${dmP} has a public meeting — put this on the record`,
+      getText: () => `${dm} has a public meeting coming up where you can give official comment on ${topic}. Show up with 2–3 ${city} residents, deliver a focused 3-minute statement, and put your demand on the official record where it cannot be ignored.`,
+      cta: 'Prepare for this meeting →', ctaColor: '#0d4dfb',
+      cta_action: 'show_event_details',
+    },
+  ];
+}
+
+function generatePetitionFromUrl(url) {
+  const m   = url.match(/\/p\/([^/?&#\s]+)/i);
+  const raw = m ? decodeURIComponent(m[1]) : url;
+  const words = raw.toLowerCase().replace(/[-_]+/g,' ').split(' ').filter(Boolean);
+  const title = _slugToTitle(raw);
+  const { loc, topic, dm } = _detectMeta(words);
+  const steps         = _genSteps(title, topic, dm, loc);
+  const roadmapPhases = _genRoadmapPhases(title, topic, dm, loc);
+  const signals       = _genSignals(title, topic, dm, loc);
+  const sigs = 50 + Math.floor(raw.split('').reduce((a,c) => a+c.charCodeAt(0), 0) % 420);
+  const city = loc.split(',')[0].trim();
+  return {
+    match: [raw.toLowerCase()], title, topic, dm, loc, sigs,
+    cmt: Math.max(3, Math.floor(sigs*.04)),
+    prm: Math.max(1, Math.floor(sigs*.015)),
+    views: Math.floor(sigs*6.2),
+    signals, steps, roadmapPhases,
+    roadmap: [
+      { name:'Spark',    tasks: steps.slice(0,3).map(s=>({t:s.t,d:s.c})) },
+      { name:'Build',    tasks: steps.slice(3,7).map(s=>({t:s.t,d:s.c})) },
+      { name:'Pressure', tasks: steps.slice(7,12).map(s=>({t:s.t,d:s.c})) },
+      { name:'Decision', tasks: [
+        ...steps.slice(12,14).map(s=>({t:s.t,d:s.c})),
+        { t:"Use Change.org's Declare Victory to document outcomes", d:'Document your outcome publicly — wins inspire others fighting the same issues.' },
+      ]},
+    ],
+    summaryTexts: [
+      `You're in Phase 1: Spark. Your goal: 100 signatures from ${city} in the first two weeks.`,
+      `You're in Phase 2: Build. Activate your signers and collect compelling ${topic} stories.`,
+      `You're in Phase 3: Pressure. Take your campaign directly to ${dm}.`,
+      `You're in Phase 4: Decision. Deliver your signatures and declare your position.`,
+    ],
+    initialActions: [
+      `Share the petition with 20 people in ${city} personally — text converts 3× better than social for the first push.`,
+      `Post in local ${city} Facebook groups today with a short personal note about why ${topic} matters to this community.`,
+      `Ask one person directly affected by ${topic} in ${city} to leave a video comment on the petition this week.`,
+    ],
+  };
+}
+
+const PETITIONS = [
+  { match: ['school','education','student','teacher','arts','lincoln'],
+    title: 'Save Arts Education at Lincoln Middle School',
+    topic: 'education', dm: 'School Board of Directors',
+    loc: 'Portland, OR', sigs: 487, cmt: 62, prm: 28 },
+  { match: ['park','tree','green','river','environment','climate','nature','forest'],
+    title: 'Protect Riverside Park from Commercial Development',
+    topic: 'environment', dm: 'City Council',
+    loc: 'Austin, TX', sigs: 1243, cmt: 118, prm: 64 },
+  { match: ['hospital','health','medical','westside','care'],
+    title: 'Keep Westside Community Hospital Open',
+    topic: 'healthcare', dm: 'County Health Commission',
+    loc: 'Sacramento, CA', sigs: 3892, cmt: 301, prm: 147 },
+  { match: ['animal','pet','dog','cat','shelter','testing','labs'],
+    title: 'End Animal Testing at Lakewood Research Labs',
+    topic: 'animal welfare', dm: 'Lab Director & City Council',
+    loc: 'Chicago, IL', sigs: 8201, cmt: 512, prm: 240 },
+  { match: ['crosswalk','street','traffic','safety','pedestrian','bike','transit'],
+    title: 'Fund Safe Crosswalks on Main Street',
+    topic: 'public safety', dm: 'City Transportation Dept.',
+    loc: 'Denver, CO', sigs: 73, cmt: 14, prm: 5 },
+  { match: ['housing','rent','eviction','tenant','affordable'],
+    title: 'Stop Predatory Rent Hikes in East Side Apartments',
+    topic: 'housing', dm: 'City Housing Authority',
+    loc: 'Seattle, WA', sigs: 2154, cmt: 187, prm: 96 },
+];
+
+const DEFAULT_PETITION = PETITIONS[4];
+
+const PATHS = [
+  {
+    id: 'ground-up',
+    name: 'Build from the ground up',
+    tag: 'Win your neighbors first, earn local press, show up in person.',
+    ico: '🌱', icoCls: 'ico-red',
+    bullets: [
+      'Reach your first 50 supporters through personal conversations',
+      'Earn your first local press mention',
+      'Show up at a public meeting with signatures in hand'
+    ],
+    phases: ['Spark','Build','Pressure','Decision'],
+    roadmap: [
+      { name:'Spark',    tasks:['Talk to your 20 closest neighbors or contacts personally','Share in local Facebook groups and Nextdoor','Get your first 50 supporters on record'] },
+      { name:'Build',    tasks:['Pitch your story to a local journalist','Host or attend a community gathering','Collect personal testimonials from supporters'] },
+      { name:'Pressure', tasks:['Deliver a letter to the decision maker with signatures','Stage a visible community moment or photo op','Get local media to cover the story'] },
+      { name:'Decision', tasks:['Request a formal meeting with your signatures','Bring 3 supporters to speak alongside you',"Document the decision maker's response publicly"] },
+    ],
+    steps: [
+      { t:'Talk to 20 neighbors or close contacts personally', c:'Personal conversations convert at 3× the rate of social posts. Start with people who already trust you.' },
+      { t:'Post in your local Facebook group or Nextdoor', c:'Hyperlocal groups are where your most credible early supporters already gather.' },
+      { t:'Get to 50 signatures this week', c:'50 verified local supporters is enough to get a journalist interested and a meeting request taken seriously.' },
+      { t:'Pitch your story to a local journalist', c:'Find a reporter who covered your issue in the last 6 months. Lead with a personal story, not statistics.' },
+      { t:'Show up at a public meeting with signatures', c:'Your physical presence on the record is harder to ignore than an email. Bring your supporters.' },
+    ]
+  },
+  {
+    id: 'work-system',
+    name: 'Work the system from inside',
+    tag: 'Map who decides, attend every meeting, get on the official record.',
+    ico: '🗺️', icoCls: 'ico-blue',
+    bullets: [
+      'Map every decision-maker and every step in the approval process',
+      'Attend your first relevant committee or council meeting',
+      'Get a documented response from the right official'
+    ],
+    phases: ['Spark','Build','Pressure','Decision'],
+    roadmap: [
+      { name:'Spark',    tasks:['Research and map every decision-maker in the process','Identify which meetings, committees, or hearings are relevant','Make contact with the most accessible official first'] },
+      { name:'Build',    tasks:['Attend your first public meeting and speak on record','Build a list of allies inside the system','Get your petition in front of a staff member or aide'] },
+      { name:'Pressure', tasks:['Submit formal written comments to every relevant body','Bring a delegation to a key meeting','Get a documented response or a promise to review'] },
+      { name:'Decision', tasks:['Deliver your full supporter list to the decision maker','Hold them to any commitments made on record','Escalate to a higher body if no response'] },
+    ],
+    steps: [
+      { t:'Map every decision-maker and the process they follow', c:'Knowing who approves what, and when, is the most underused advantage in local campaigns.' },
+      { t:'Identify the next relevant meeting or hearing', c:'Committee meetings, council sessions, and public hearings are your best access points.' },
+      { t:'Make first contact with the most accessible official', c:'Start with a staff member or aide. A warm introduction is worth more than a cold letter.' },
+      { t:'Attend a public meeting and speak on record', c:'Showing up in person signals you are serious and creates an official record that is hard to dismiss.' },
+      { t:'Submit formal written comments to every relevant body', c:'Written comments become part of the official record and can be cited in future proceedings.' },
+    ]
+  },
+  {
+    id: 'make-news',
+    name: 'Turn this into a story',
+    tag: 'Create a moment the media cannot ignore and make it travel.',
+    ico: '📣', icoCls: 'ico-grn',
+    bullets: [
+      'Develop one compelling visual moment or photo op',
+      'Pitch to regional and national media with a single strong hook',
+      'Create something shareable that spreads beyond your network'
+    ],
+    phases: ['Spark','Build','Pressure','Decision'],
+    roadmap: [
+      { name:'Spark',    tasks:['Identify your strongest story and the most compelling image','Draft a one-paragraph pitch for journalists','Build a press list of 10 relevant reporters'] },
+      { name:'Build',    tasks:['Stage your first visual moment or photo op','Pitch to local media and get your first coverage','Use that coverage to reach national journalists'] },
+      { name:'Pressure', tasks:['Place stories in regional and national outlets','Create a moment that generates social sharing','Get the decision maker on record responding to coverage'] },
+      { name:'Decision', tasks:['Use media attention to force a formal response','Deliver signatures alongside a press release','Declare victory or escalate with press support'] },
+    ],
+    steps: [
+      { t:'Identify your most compelling story and image', c:'One powerful photo or human story is worth a thousand signatures in media terms.' },
+      { t:'Draft a one-paragraph pitch for journalists', c:'Lead with the human stakes, not statistics. Reporters decide in 10 seconds.' },
+      { t:'Build a press list of 10 targeted reporters', c:'Find journalists who have covered your issue in the last 3 months. Warm pitches work far better than cold ones.' },
+      { t:'Stage a visual moment or photo op', c:'Give media something to photograph. An empty podium with a printed petition does not travel. People do.' },
+      { t:'Use first coverage to pitch national outlets', c:'A single local story is your proof of concept. Use it immediately to pitch the next level up.' },
+    ]
+  }
+];
+
+const SIGNALS_DATA = [
+  {
+    ico: '📈', lbl: 'Signature Milestone',
+    getText: (p) => `You just hit ${fmt(nextMilestone(state.sigs - 1))} signatures. Your supporters are waiting to hear from you. Send an update now.`,
+    cta: 'Send update →', ctaColor: '#e01a2b'
+  },
+  {
+    ico: '📰', lbl: 'Trending News',
+    getText: (p) => `Your topic (${p.topic}) is trending in the news right now. This is a good moment to share your petition and ride the wave.`,
+    cta: 'Open sharing tools →', ctaColor: '#0d4dfb'
+  },
+  {
+    ico: '📅', lbl: 'Upcoming Event',
+    getText: (p) => `There's a ${p.topic} hearing related to your cause on ${futureDate()}. Here's how to make the most of it.`,
+    cta: 'Learn more →', ctaColor: '#0d4dfb'
+  }
+];
+
+/* ============================================
+   LAKE BONNY PETITION — REAL DATA
+   Source: change.org/p/petition-for-an-independent-investigation-into-the-lake-bonny-flooding-and-related-matters
+============================================ */
+
+const LAKE_BONNY_PETITION = {
+  match: ['lake-bonny','bonny','independent-investigation-into-the-lake','lake-bonny-flooding'],
+  title: 'Independent Investigation into the Lake Bonny Flooding',
+  topic: 'flood infrastructure accountability',
+  dm: 'Lakeland City Commission, Polk County, SWFWMD',
+  loc: 'Lakeland, FL',
+  sigs: 348, cmt: 12, prm: 5, views: 2100,
+
+  signals: [
+    {
+      signal_type: 'supporter_share',
+      ico: '📱', lbl: 'Momentum Alert',
+      headline: 'Your Facebook post is driving new signatures',
+      getText: () => 'Someone in a Lakeland Facebook group shared your petition and drove 23 new signatures in the last few hours. Jump back on Facebook now and keep the momentum going.',
+      cta: 'Share on Facebook now →', ctaColor: '#0d4dfb',
+      cta_action: 'open_sharing_tool',
+    },
+    {
+      signal_type: 'news_mention',
+      ico: '📰', lbl: 'News Mention',
+      headline: 'The Lakeland Ledger just covered flood accountability',
+      getText: () => 'The Lakeland Ledger just published a story on Hurricane Milton flood accountability across Polk County. This is your moment — connect their reporter to your petition and the real residents behind it.',
+      cta: 'Reach out to media →', ctaColor: '#0d4dfb',
+      cta_action: 'open_decision_maker_tab',
+    },
+    {
+      signal_type: 'signature_milestone',
+      ico: '🎉', lbl: 'Milestone Reached',
+      headline: 'Lakeland is showing up — thank your supporters',
+      getText: () => 'You just hit 500 signatures — 500 Lakeland residents demanding answers about the flooding. Send your supporters a thank-you and ask them to keep sharing.',
+      cta: 'Send a supporter update →', ctaColor: '#e01a2b',
+      cta_action: 'open_post_update_tab',
+    },
+    {
+      signal_type: 'in_person_event',
+      ico: '📅', lbl: 'Upcoming Meeting',
+      headline: 'City Commission meets Monday — put this on the record',
+      getText: () => 'Lakeland City Commission meets this Monday at City Hall (228 S. Massachusetts Ave). Public comment is open — show up with 2–3 residents and put your demand on the official record.',
+      cta: 'Prepare for this meeting →', ctaColor: '#0d4dfb',
+      cta_action: 'show_event_details',
+    }
+  ],
+
+  steps: [
+    { t: 'Share your petition with 20 Lakeland contacts personally', c: 'Text or email the petition to 20 people in Lakeland and the Lake Bonny area. Ask each to share with two others.', why: 'Personal shares convert 3× better than social posts — your network is your fastest path to 100 signatures.' },
+    { t: 'Post in Lakeland & Polk County Facebook groups', c: 'Find groups like "Lakeland FL Community" and "Polk County Neighbors." Reshare every 2–3 days with fresh wording.', why: 'Hyperlocal groups reach the people most affected — and most likely to sign and share.' },
+    { t: 'Set up a custom Change.org vanity link', c: "Use Change.org's vanity URL feature to create a short memorable link. Add it to your email signature and bio.", why: 'A clean URL removes friction and looks more credible when shared in print or verbally.' },
+    { t: 'Ask flood survivors to post video comments', c: 'Ask neighbors: "How many days was your home underwater?" Personal stories are harder to dismiss than numbers.', why: 'Video comments from real residents create emotional proof that no statistic can match.' },
+    { t: 'Send your first update to all signers', c: 'Thank them, share the current count, and ask each signer to share with one more person in Lakeland today.', why: 'Signers who receive updates are 4× more likely to share — your existing supporters are your best channel.' },
+    { t: 'Post a milestone update in Lakeland Facebook groups', c: 'Post a milestone update tagging local news and community groups. "We hit 100 — help us reach 500."', why: 'Public milestones create momentum signals that press and officials pay attention to.' },
+    { t: 'Ask your top supporters to share on Nextdoor in Lakeland', c: 'Identify your most engaged supporters and ask them to post on Nextdoor neighborhoods in the Lake Bonny area.', why: 'Nextdoor reaches hyper-local residents who may not be active on Facebook but were directly flooded.' },
+    { t: 'Email each Lakeland City Commissioner individually', c: "Use lakelandgov.net. Ask if they will commission an investigation modeled on Hillsborough County's process.", why: 'Individual emails get read; mass contact forms get ignored. Each commissioner needs to feel personally accountable.' },
+    { t: 'Submit a formal comment to SWFWMD about pump failures', c: 'Submit at watermatters.org requesting an audit of Lake Bonny pump maintenance records. Copy both commissions.', why: 'SWFWMD has direct jurisdiction — their involvement validates the investigation demand.' },
+    { t: 'Attend a public meeting and give official comment', c: 'City Commission meets first and third Mondays at City Hall, 228 S. Massachusetts Ave. Bring 2–3 residents to speak.', why: 'Showing up in person creates an official record that commissioners cannot ignore or delete.' },
+    { t: 'Pitch your story to Lakeland Ledger & Bay News 9', c: '"17 inches of water, 3 weeks, zero accountability." Include 2–3 resident contacts willing to speak on record.', why: 'Media coverage exponentially expands reach and creates pressure no official can dismiss.' },
+    { t: 'Distribute petition flyers with QR codes in Lakeland', c: 'Download a Change.org flyer and distribute at churches, FEMA events, local businesses, and community centers.', why: 'Offline neighbors who were flooded but are not active online are critical voices — flyers reach them.' },
+    { t: 'Deliver your signatures at a public meeting', c: 'Download your supporter list from Change.org and deliver it at a public commission meeting.', why: 'A formal delivery creates a public accountability moment that officials must respond to on the record.' },
+    { t: 'Issue a press release on delivery day', c: 'Restate all four demands publicly: investigation, public findings, infrastructure fixes, community oversight.', why: 'Same-day press coverage of signature delivery maximizes the political cost of inaction.' },
+  ],
+
+  roadmapPhases: [
+    { name: 'Spark', tasks: [
+      'Share your petition with 20 Lakeland contacts personally',
+      'Post in Lakeland FL Community and Polk County Facebook groups',
+      'Set up a custom Change.org vanity URL for easy sharing'
+    ]},
+    { name: 'Build', tasks: [
+      'Collect video comments from flood survivors in Lakeland',
+      'Send your first update — thank signers and ask them to reshare',
+      'Post a milestone update in Lakeland Facebook groups'
+    ]},
+    { name: 'Pressure', tasks: [
+      'Email each Lakeland City Commissioner individually at lakelandgov.net',
+      'Submit a formal comment to SWFWMD about pump system failures',
+      'Attend a public meeting and give official comment',
+      'Pitch your story to Lakeland Ledger, Bay News 9, WTSP, and WFLA',
+      'Distribute petition flyers with QR codes in Lakeland'
+    ]},
+    { name: 'Decision', tasks: [
+      'Deliver your signatures to City Hall at a public meeting',
+      'Issue a press release on delivery day reiterating all four demands',
+      "Use Change.org's Declare Victory to document outcomes and next steps"
+    ]}
+  ]
+};
+
+/* ============================================
+   STATE
+============================================ */
+
+let state = {
+  petition: null,
+  path: null,
+  phase: 1,       // actual current campaign phase
+  viewedPhase: 1, // phase being browsed in the stepper (can differ from phase)
+  sigs: 0,
+  done: [],
+  focusIdx: 0,
+  dynamicTask: null,
+  sigIdx: 0,
+  sigHidden: false,
+  rmOpen: false,
+  demoOpen: false,
+};
+
+/* ============================================
+   UTILITIES
+============================================ */
+
+const MILESTONES = [1,5,10,20,50,100,500,1000,2500,5000,10000,50000,100000,500000,1000000];
+
+function nextMilestone(n) {
+  for (const m of MILESTONES) if (m > n) return m;
+  return MILESTONES[MILESTONES.length - 1];
+}
+
+function prevMilestone(n) {
+  let prev = 0;
+  for (const m of MILESTONES) { if (m >= n) return prev; prev = m; }
+  return prev;
+}
+
+function fmt(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(n%1000000===0?0:1)+'M';
+  if (n >= 1000)    return (n/1000).toFixed(n%1000===0?0:1)+'K';
+  return String(n);
+}
+
+function futureDate() {
+  const d = new Date();
+  d.setDate(d.getDate() + 9);
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
+
+function guessPetition(url) {
+  const s = url.toLowerCase();
+  // Check real petition data first
+  if (LAKE_BONNY_PETITION.match.some(k => s.includes(k))) return LAKE_BONNY_PETITION;
+  for (const p of PETITIONS) {
+    if (p.match.some(k => s.includes(k))) return p;
+  }
+  // Generate a fully customised petition from the URL slug
+  return generatePetitionFromUrl(url);
+}
+
+/* ============================================
+   URL SCREEN
+============================================ */
+
+/* ─── PETITION SLUGS (add one per research participant before each session) ─── */
+const SLUGS = {
+  'lake-bonny': 'https://www.change.org/p/petition-for-an-independent-investigation-into-the-lake-bonny-flooding-and-related-matters',
+  // 'p1': 'https://www.change.org/p/...',
+  // 'p2': 'https://www.change.org/p/...',
+};
+
+const LS_KEY = 'co_pilot_petition';
+
+function savePetition(url, title) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ url, title })); } catch(e) {}
+}
+
+function loadSaved() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch(e) { return null; }
+}
+
+function clearSaved() {
+  localStorage.removeItem(LS_KEY);
+  document.getElementById('saved-card').classList.add('hidden');
+  document.getElementById('url-hint-row').style.display = '';
+}
+
+function continueWithSaved() {
+  const saved = loadSaved();
+  if (saved) startParsing(saved.url);
+}
+
+function handleUrlSubmit() {
+  const v = document.getElementById('petition-url').value.trim();
+  if (!v) {
+    const el = document.getElementById('petition-url');
+    el.classList.add('err');
+    setTimeout(() => el.classList.remove('err'), 900);
+    return;
+  }
+  startParsing(v);
+}
+
+function loadDemo() {
+  startParsing(SLUGS['lake-bonny']);
+}
+
+/* ─── AUTO-LOAD: run on page start ─── */
+(function autoInit() {
+  const params = new URLSearchParams(window.location.search);
+  const slug   = params.get('p');
+  const raw    = params.get('url');
+
+  // 1. Pre-seeded research link (?p=slug)
+  if (slug && SLUGS[slug]) { startParsing(SLUGS[slug]); return; }
+  // 2. Explicit URL param
+  if (raw) { startParsing(decodeURIComponent(raw)); return; }
+  // 3. Saved from a previous session
+  const saved = loadSaved();
+  if (saved) { startParsing(saved.url); return; }
+  // 4. No context at all — load default petition silently
+  startParsing(SLUGS['lake-bonny']);
+})();
+
+document.getElementById('petition-url').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleUrlSubmit();
+});
+
+/* ============================================
+   PARSING FLOW
+============================================ */
+
+// Fetches real petition metadata (image, sigs, comments) via Vercel serverless function
+async function fetchPetitionMeta(url) {
+  try {
+    if (!url.includes('change.org')) return {};
+    const endpoint = '/api/petition-meta?url=' + encodeURIComponent(url);
+    const res = await fetch(endpoint);
+    if (!res.ok) return {};
+    return await res.json();
+  } catch(e) {
+    return {};
+  }
+}
+
+function _applyMeta(meta) {
+  if (!meta || !state.petition) return;
+  if (meta.img)   state.petition.img   = meta.img;
+  if (meta.sigs)  { state.petition.sigs = meta.sigs; state.sigs = meta.sigs; }
+  if (meta.cmt)   state.petition.cmt   = meta.cmt;
+  if (meta.title) state.petition.title = meta.title;
+}
+
+function startParsing(url) {
+  document.getElementById('screen-url').classList.add('hidden');
+  document.getElementById('overlay-parse').classList.remove('hidden');
+
+  const msgs = [
+    'Reading petition content',
+    'Identifying your decision maker',
+    'Scanning 50,000+ similar campaigns',
+    'Analyzing local political landscape',
+    'Mapping your supporter network',
+    'Scoring signal opportunities',
+    'Calibrating your victory path',
+    'Generating personalized action steps',
+    'Finalizing your roadmap',
+  ];
+  let i = 0;
+  let metaResult = null;
+  fetchPetitionMeta(url).then(m => { metaResult = m; });
+
+  const iv = setInterval(() => {
+    i++;
+    if (i < msgs.length) {
+      document.getElementById('parse-status').textContent = msgs[i] + '...';
+    } else {
+      clearInterval(iv);
+      state.petition = guessPetition(url);
+      _applyMeta(metaResult);
+      state.sigs = state.petition.sigs;
+      savePetition(url, state.petition.title);
+      setTimeout(() => {
+        document.getElementById('overlay-parse').classList.add('hidden');
+        showPathScreen();
+      }, 500);
+    }
+  }, 1100);
+}
+
+/* ============================================
+   PATH SCREEN
+============================================ */
+
+function showPathScreen() {
+  // Build petition card at the top
+  const wrap = document.getElementById('petition-card-wrap');
+  if (wrap && state.petition) {
+    const p = state.petition;
+    const d = TOPIC_IMGS[p.topic] || { bg:'linear-gradient(135deg,#374151,#9ca3af)', emoji:'📋' };
+    const imgHTML = p.img
+      ? '<img src="' + p.img + '" style="width:100%;height:100%;object-fit:cover;display:block;" alt="">'
+      : '<span style="font-size:1.5rem;line-height:1;">' + d.emoji + '</span>';
+    wrap.innerHTML =
+      '<div style="border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.07);background:#fff;">' +
+        '<div style="display:flex;align-items:stretch;min-height:4.5rem;">' +
+          '<div style="width:4.5rem;flex-shrink:0;background:' + (p.img ? '#e2e8f0' : d.bg) + ';display:flex;align-items:center;justify-content:center;overflow:hidden;">' + imgHTML + '</div>' +
+          '<div style="padding:.75rem 1rem;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:.1875rem;">' +
+            '<div style="font-size:.5rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;font-family:monospace;">Your petition</div>' +
+            '<div style="font-family:Commissioner,sans-serif;font-size:.9375rem;font-weight:700;color:#0f172a;line-height:1.25;">' + p.title + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+  buildPathCards();
+  document.getElementById('screen-path').classList.remove('hidden');
+}
+
+function buildPathCards() {
+  const p = state.petition;
+  const el = document.getElementById('path-cards');
+  el.innerHTML = '';
+
+  PATHS.forEach(path => {
+    const exs = {
+      'ground-up': `A ${p.topic} campaign in ${p.loc} reached ${fmt(Math.round(p.sigs*1.4))} signatures in 3 weeks through neighbor-to-neighbor outreach, earned local press coverage, and got a formal response within a month.`,
+      'work-system': `A ${p.topic} advocate in ${p.loc} attended 4 consecutive meetings, built relationships with 2 committee members, and got a policy review committed on the public record.`,
+      'make-news': `A ${p.topic} campaign in ${p.loc} staged a single photo op, placed stories in 3 regional outlets, and generated enough national attention to force a decision maker to respond publicly.`,
+    };
+    const card = document.createElement('div');
+    card.className = 'path-card';
+    card.innerHTML = `
+      <div class="path-card-top">
+        <div class="path-ico ${path.icoCls}">${path.ico}</div>
+        <div>
+          <div class="path-name">${path.name}</div>
+          <div class="path-tag">${path.tag}</div>
+        </div>
+      </div>
+      <ol class="path-milestones">${path.bullets.map((b,i)=>'<li class="path-milestone"><span class="ms-dot">'+(i+1)+'</span><span class="ms-text">'+b+'</span></li>').join('')}</ol>
+      <button class="btn-choose">Choose this path</button>
+      <button class="path-learn-link">Petitions that took this path →</button>
+    `;
+    // Attach listeners directly — inline onclick in innerHTML is unreliable
+    const pathId = path.id;
+    card.querySelector('.btn-choose').addEventListener('click', () => {
+      el.querySelectorAll('.path-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      setTimeout(() => choosePath(pathId), 500);
+    });
+    card.querySelector('.path-learn-link').addEventListener('click', () => openSimilar(pathId));
+    el.appendChild(card);
+  });
+}
+
+function choosePath(id) {
+  state.path = PATHS.find(p => p.id === id);
+  // Demo: start in Phase 2 with Spark complete
+  state.done = [0, 1, 2];  // Phase 1 (Spark) steps marked done
+  state.phase = 2;
+  state.viewedPhase = 2;
+  state.focusIdx = 3;  // First Phase 2 step
+  state.sigIdx = 0;
+  state.sigHidden = false;
+
+  document.getElementById('screen-path').classList.add('hidden');
+  showBuildOverlay();
+}
+
+function showBuildOverlay() {
+  document.getElementById('overlay-build').classList.remove('hidden');
+  const ids = ['bs1','bs2','bs3','bs4'];
+  let i = 0;
+  const iv = setInterval(() => {
+    if (i > 0) {
+      document.getElementById(ids[i-1]).classList.remove('active');
+      document.getElementById(ids[i-1]).classList.add('done');
+    }
+    if (i < ids.length) {
+      document.getElementById(ids[i]).classList.add('active');
+      i++;
+    } else {
+      clearInterval(iv);
+      setTimeout(() => {
+        document.getElementById('overlay-build').classList.add('hidden');
+        showMain();
+      }, 400);
+    }
+  }, 420);
+}
+
+function switchPath() {
+  document.getElementById('screen-main').classList.add('hidden');
+  document.getElementById('bottom-nav').style.display = 'none';
+  showPathScreen();
+}
+
+/* ============================================
+   MAIN SCREEN
+============================================ */
+
+function showMain() {
+  try { renderMain(); } catch(e) { console.error('[VP] renderMain error:', e); }
+  document.getElementById('screen-main').classList.remove('hidden');
+  document.getElementById('bottom-nav').style.display = 'flex';
+  tickClock();
+}
+
+function renderMain() {
+  const p = state.petition;
+  const path = state.path;
+
+  document.getElementById('topbar-title').textContent = p.title;
+  setCampaignImg(p);
+
+  updateDial();
+  const _sc = document.getElementById('stat-cmt'); if(_sc) _sc.textContent = fmt(p.cmt);
+  const _sp = document.getElementById('stat-prm'); if(_sp) _sp.textContent = fmt(p.prm);
+  const _sv = document.getElementById('stat-views'); if(_sv) _sv.textContent = fmt(p.views || Math.round(p.sigs * 6.1));
+
+  renderStepper();
+  renderH1FocusCard();
+  try { renderH1AllTasks(); } catch(e) { console.error("renderH1AllTasks:", e); }
+}
+
+/* ============================================
+   DIAL
+============================================ */
+
+function updateDial() {
+  const n = state.sigs;
+  const hi = nextMilestone(n);
+  const lo = prevMilestone(n);
+  const pct = (hi - lo) > 0 ? Math.min((n - lo) / (hi - lo), 1) : 0;
+  const arcLen = 295;
+  document.getElementById('dial-arc').style.strokeDashoffset = String(arcLen * (1 - pct));
+  const x2 = Math.max(17, 110 - 94 * Math.cos(Math.PI * pct));
+  const grad = document.getElementById('dialGrad');
+  if (grad) { grad.setAttribute('x2', String(x2)); grad.setAttribute('y2', '106'); }
+  // stroke gradient set in SVG attribute — no JS override needed
+  // All text lives inside the SVG as native text elements
+  document.getElementById('dial-num').textContent      = fmt(n);
+  document.getElementById('dial-lo').textContent       = fmt(lo);
+  document.getElementById('dial-hi').textContent       = fmt(hi);
+  document.getElementById('dial-goal-lbl').textContent = `Next goal: ${fmt(hi)}`;
+}
+
+/* ============================================
+   STEPPER
+============================================ */
+
+function renderStepper() {
+  const el = document.getElementById('stepper');
+  el.innerHTML = '';
+  state.path.phases.forEach((ph, i) => {
+    const n = i + 1;
+    const isDone     = n < state.phase;
+    const isActive   = n === state.phase;
+    const isSelected = n === state.viewedPhase && n !== state.phase;
+    const cls = isDone ? 's-done' : isActive ? 's-active' : isSelected ? 's-selected' : '';
+    const step = document.createElement('div');
+    step.className = `stepper-step ${cls}`;
+    step.style.cursor = 'pointer';
+    step.onclick = () => goToPhase(n);
+    step.innerHTML = `
+      <div class="step-circle">${isDone ? '✓' : n}</div>
+      <div class="step-phase-lbl">${ph}</div>
+    `;
+    el.appendChild(step);
+  });
+}
+
+function goToPhase(n) {
+  state.viewedPhase = n; // browse without changing actual campaign phase
+  renderStepper();
+  renderSteps();
+}
+
+/* Return step indices belonging to a given 1-based phase number */
+function getPhaseStepIndices(phaseNum) {
+  const steps  = state.petition.steps || state.path.steps || [];
+  const phases = state.petition.roadmapPhases || (state.path && state.path.roadmap) || [];
+  let start = 0;
+  for (let i = 0; i < phaseNum - 1; i++) start += (phases[i] ? phases[i].tasks.length : 0);
+  const count = phases[phaseNum - 1] ? phases[phaseNum - 1].tasks.length : 0;
+  return Array.from({length: count}, (_, i) => start + i).filter(i => i < steps.length);
+}
+
+/* ============================================
+   NEXT STEPS
+============================================ */
+
+function renderSteps() {
+  const steps    = state.petition.steps || state.path.steps;
+  const indices  = getPhaseStepIndices(state.viewedPhase);
+  const isCurrent = state.viewedPhase === state.phase;
+  const isFuture  = state.viewedPhase > state.phase;
+  const el = document.getElementById('next-steps');
+  if (!el) return; // element not present on this screen — use H1 focus card instead
+  el.innerHTML = '';
+
+  if (indices.length === 0) {
+    el.innerHTML = `<div class="all-done-state">No steps found for this phase.</div>`;
+    return;
+  }
+
+  // Future phase — preview, not actionable
+  if (isFuture) {
+    const label = document.createElement('div');
+    label.style.cssText = 'font-family:var(--mono);font-size:.5625rem;font-weight:500;color:var(--gray-400);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.75rem;';
+    label.textContent = `Coming up in Phase ${state.viewedPhase}`;
+    el.appendChild(label);
+    indices.forEach(i => {
+      const s = steps[i];
+      const card = document.createElement('div');
+      card.className = 'step-item';
+      card.style.opacity = '.55';
+      card.innerHTML = `
+        <div class="step-cb" style="border-color:var(--gray-300);cursor:default;pointer-events:none"></div>
+        <div class="step-body">
+          <div class="step-ttl">${s.t}</div>
+          <div class="step-ctx">${s.c}</div>
+        </div>`;
+      el.appendChild(card);
+    });
+    return;
+  }
+
+  // Current phase — show ALL tasks, checkable
+  if (isCurrent) {
+    const allDone = indices.every(i => state.done.includes(i));
+    if (allDone) {
+      el.innerHTML = `<div class="all-done-state">All steps in this phase complete!<strong>Phase complete — great work. 🎉</strong></div>`;
+      return;
+    }
+    // Find the first uncompleted step index to tag it
+    const firstPending = indices.find(i => !state.done.includes(i));
+    indices.forEach(i => {
+      const s = steps[i], done = state.done.includes(i);
+      const isFirst = i === firstPending;
+      const card = document.createElement('div');
+      card.className = `step-item${done ? ' is-done' : ''}`;
+      card.id = `si-${i}`;
+      card.innerHTML = `
+        <div class="step-cb${done?' ticked':''}" id="cb-${i}" onclick="tickStep(${i})"></div>
+        <div class="step-body">
+          ${isFirst ? '<div class="do-this-next">Do this next</div>' : ''}
+          <div class="step-ttl">${s.t}</div>
+          <div class="step-ctx">${s.c}</div>
+          ${done ? `<div class="step-done-msg">Done. Keep going.</div>` : ''}
+        </div>`;
+      el.appendChild(card);
+    });
+    return;
+  }
+
+  // Past phase — show all, ticked if done
+  indices.forEach(i => {
+    const s = steps[i], done = state.done.includes(i);
+    const card = document.createElement('div');
+    card.className = `step-item${done ? ' is-done' : ''}`;
+    card.id = `si-${i}`;
+    card.innerHTML = `
+      <div class="step-cb${done?' ticked':''}" id="cb-${i}" onclick="tickStep(${i})"></div>
+      <div class="step-body">
+        <div class="step-ttl">${s.t}</div>
+        <div class="step-ctx">${s.c}</div>
+        ${done ? `<div class="step-done-msg">Done.</div>` : ''}
+      </div>`;
+    el.appendChild(card);
+  });
+}
+
+function tickStep(i) {
+  if (state.done.includes(i)) return;
+  state.done.push(i);
+
+  const cb = document.getElementById(`cb-${i}`);
+  if (cb) cb.classList.add('ticked');
+
+  const card = document.getElementById(`si-${i}`);
+  if (card) {
+    card.classList.add('is-done');
+    const body = card.querySelector('.step-body');
+    if (!body.querySelector('.step-done-msg')) {
+      const m = document.createElement('div');
+      m.className = 'step-done-msg';
+      m.textContent = 'Done. Keep going.';
+      body.appendChild(m);
+    }
+  }
+
+  setTimeout(() => renderSteps(), 850);
+}
+
+/* ============================================
+   ROADMAP
+============================================ */
+
+function renderRoadmap() {
+  const el = document.getElementById('roadmap-body');
+  if (!el) return; // roadmap toggle removed
+  el.innerHTML = '';
+  // Prefer petition-specific roadmap phases if available
+  const phases = state.petition.roadmapPhases || state.path.roadmap;
+  phases.forEach((ph, i) => {
+    const cur = (i + 1) === state.phase;
+    const div = document.createElement('div');
+    div.className = 'rm-phase';
+    div.innerHTML = `
+      <div class="rm-phase-name${cur?' cur':''}">
+        ${cur ? '→ ' : ''}${ph.name}${cur ? ' (current)' : ''}
+      </div>
+      ${ph.tasks.map(t=>`<div class="rm-task">${t}</div>`).join('')}
+    `;
+    el.appendChild(div);
+  });
+}
+
+function toggleRoadmap() {
+  state.rmOpen = !state.rmOpen;
+  const _rb = document.getElementById('roadmap-body'); if (_rb) _rb.classList.toggle('open', state.rmOpen);
+  const _rc = document.getElementById('rm-chevron'); if (_rc) _rc.classList.toggle('up', state.rmOpen);
+}
+
+/* ============================================
+   SIGNALS
+============================================ */
+
+function renderSignal() {
+  const banner = document.getElementById('signal-banner');
+  if (!banner) return;
+  if (state.sigHidden) { banner.classList.add('hidden'); return; }
+  const signalSet = state.petition.signals || SIGNALS_DATA;
+  const sig = signalSet[state.sigIdx % signalSet.length];
+  const p = state.petition;
+  banner.classList.remove('hidden');
+  const ico = document.getElementById('sig-ico'); if (ico) ico.textContent = sig.ico;
+  const lbl = document.getElementById('sig-label'); if (lbl) lbl.textContent = sig.lbl;
+  const txt = document.getElementById('sig-text'); if (txt) txt.textContent = sig.getText(p);
+  const cta = document.getElementById('sig-cta'); if (cta) cta.textContent = sig.cta;
+}
+
+function dismissSignal() {
+  state.sigHidden = true;
+  const _sb = document.getElementById('signal-banner'); if (_sb) _sb.classList.add('hidden');
+}
+
+const SIGNAL_TASK_TITLES = [
+  'Ride the Facebook momentum — share now',
+  'Connect the Lakeland Ledger story to your petition',
+  'Thank 500 supporters and ask them to reshare',
+  'Prepare your public comment for Monday\'s City Commission',
+];
+
+function triggerSignal(idx) {
+  // Map demo indices 0,1,2 → petition signal indices 0,1,3
+  const sigMap = [0, 1, 3];
+  const sigIdx = sigMap[idx] !== undefined ? sigMap[idx] : idx;
+  const sigs = (state.petition && state.petition.signals) || [];
+  const sig = sigs[sigIdx];
+  if (!sig) return;
+  state.dynamicTask = {
+    label: sig.lbl,
+    t: SIGNAL_TASK_TITLES[sigIdx] || sig.lbl,
+    c: sig.getText(),
+    why: 'Acting now while this signal is active will have maximum impact on your campaign.',
+    cta: sig.cta,
+    ctaColor: sig.ctaColor,
+  };
+  renderH1FocusCard();
+}
+
+function triggerShareActivity() {
+  state.dynamicTask = {
+    label: 'Supporter Signal',
+    isShare: true,
+    t: 'Facebook is your highest-converting channel right now',
+    supporter: {
+      name: 'Marcus Williams',
+      photo: 'https://i.pravatar.cc/48?img=7',
+      platforms: [
+        { name: 'Facebook', shares: 4, sigs: 47 },
+        { name: 'Nextdoor', shares: 2, sigs: 18 },
+      ],
+      totalSigs: 65,
+    },
+    ctx: 'Marcus has shared your petition 4× on Facebook (47 sigs) and 2× on Nextdoor (18 sigs), recruiting 65 total signatures. Facebook converts 2.6× better than Nextdoor.',
+    why: 'Doubling down on your strongest channel is 3× more effective than spreading thin across platforms.',
+    cta: 'Post on Facebook now →',
+    draft: '"Our community deserves real answers about Lake Bonny flooding. 348 neighbors have already signed — will you add yours? 👇 [link]\n\n#LakeBonny #Lakeland #HoldThemAccountable"',
+  };
+  renderH1FocusCard();
+}
+
+/* ============================================
+   MILESTONE
+============================================ */
+
+function simulateMilestone() {
+  const next = nextMilestone(state.sigs);
+  state.sigs = next;
+  updateDial();
+
+  const flash = document.getElementById('milestone-flash');
+  flash.textContent = `🎉 You hit ${fmt(next)} signatures! Send your supporters an update.`;
+  flash.classList.remove('hidden');
+  fireConfetti();
+
+  setTimeout(() => flash.classList.add('hidden'), 4200);
+}
+
+/* ============================================
+   CONFETTI
+============================================ */
+
+function fireConfetti() {
+  const cv = document.getElementById('confetti-canvas');
+  const ctx = cv.getContext('2d');
+  cv.width  = window.innerWidth;
+  cv.height = window.innerHeight;
+  const cols = ['#e01a2b','#0d4dfb','#059669','#f59e0b','#8b5cf6','#ec4899'];
+  const ps = Array.from({length:90}, () => ({
+    x: Math.random() * cv.width,
+    y: Math.random() * cv.height * -0.5,
+    w: Math.random() * 10 + 5,
+    h: Math.random() * 6 + 3,
+    col: cols[0|Math.random()*cols.length],
+    vy: Math.random() * 3 + 2,
+    vx: (Math.random()-0.5) * 2.5,
+    ang: Math.random() * Math.PI * 2,
+    sp: (Math.random()-0.5) * 0.2,
+    op: 1,
+  }));
+  let fr = 0;
+  function draw() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    fr++;
+    let alive = false;
+    ps.forEach(p => {
+      p.y += p.vy; p.x += p.vx; p.ang += p.sp;
+      if (fr > 75) p.op -= 0.018;
+      if (p.y < cv.height && p.op > 0) {
+        alive = true;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.op);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.ang);
+        ctx.fillStyle = p.col;
+        ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        ctx.restore();
+      }
+    });
+    if (alive) requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,cv.width,cv.height);
+  }
+  requestAnimationFrame(draw);
+}
+
+/* ============================================
+   DEMO CONTROLS
+============================================ */
+
+function toggleDemo() {
+  state.demoOpen = !state.demoOpen;
+  document.getElementById('demo-inner').classList.toggle('open', state.demoOpen);
+  document.getElementById('demo-chev').textContent = state.demoOpen ? '▲' : '▼';
+}
+
+function resetToPath() {
+  if (!state.petition) return;
+  document.getElementById('screen-main').classList.add('hidden');
+  document.getElementById('bottom-nav').style.display = 'none';
+  const _fab = document.getElementById('fab'); if (_fab) _fab.style.display = 'none';
+  showPathScreen();
+}
+
+function fullReset() {
+  state = { petition:null, path:null, phase:1, viewedPhase:1, sigs:0, done:[], focusIdx:0, dynamicTask:null, sigIdx:0, sigHidden:false, rmOpen:false, demoOpen:false };
+  ['bs1','bs2','bs3','bs4'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('active','done');
+  });
+  document.getElementById('screen-main').classList.add('hidden');
+  document.getElementById('overlay-build').classList.add('hidden');
+  document.getElementById('screen-path').classList.add('hidden');
+  document.getElementById('bottom-nav').style.display = 'none';
+  // Reload from saved or default — never show URL screen
+  const saved = loadSaved();
+  startParsing(saved ? saved.url : SLUGS['lake-bonny']);
+}
+
+function loadFromDemoInput() {
+  const v = document.getElementById('demo-url-input').value.trim();
+  if (!v) return;
+  clearSaved();
+  const currentPath = state.path; // keep current path if one is chosen
+  state = { petition:null, path:currentPath, phase:1, viewedPhase:1, sigs:0, done:[], focusIdx:0, dynamicTask:null, sigIdx:0, sigHidden:false, rmOpen:false, demoOpen:state.demoOpen };
+  startParsingDirect(v);
+}
+
+function startParsingDirect(url) {
+  // Parse new petition and refresh home screen without forcing path re-selection
+  document.getElementById('overlay-parse').classList.remove('hidden');
+  document.getElementById('screen-main').classList.add('hidden');
+  document.getElementById('bottom-nav').style.display = 'none';
+
+  const msgs = [
+    'Reading petition content',
+    'Identifying your decision maker',
+    'Scanning 50,000+ similar campaigns',
+    'Analyzing local political landscape',
+    'Mapping your supporter network',
+    'Scoring signal opportunities',
+    'Calibrating your victory path',
+    'Generating personalized action steps',
+    'Finalizing your roadmap',
+  ];
+  let i = 0;
+  let metaResult = null;
+  fetchPetitionMeta(url).then(m => { metaResult = m; });
+
+  const iv = setInterval(() => {
+    i++;
+    if (i < msgs.length) {
+      document.getElementById('parse-status').textContent = msgs[i] + '...';
+    } else {
+      clearInterval(iv);
+      state.petition = guessPetition(url);
+      _applyMeta(metaResult);
+      state.sigs = state.petition.sigs;
+      savePetition(url, state.petition.title);
+      setTimeout(() => {
+        document.getElementById('overlay-parse').classList.add('hidden');
+        if (state.path) {
+          showMain();
+        } else {
+          showPathScreen();
+        }
+      }, 400);
+    }
+  }, 1100);
+}
+
+
+/* ============================================
+   CLOCK
+============================================ */
+
+function tickClock() {
+  const n = new Date();
+  document.getElementById('sb-time').textContent = `${n.getHours()}:${String(n.getMinutes()).padStart(2,'0')}`;
+}
+setInterval(tickClock, 30000);
+
+/* ─── H1 Focus card ─── */
+let h1AllTasksOpen = false;
+
+function renderH1FocusCard() {
+  const card   = document.getElementById('h1-focus-card');
+  const eyebrow = document.getElementById('h1-focus-eyebrow');
+  const title   = document.getElementById('h1-focus-title');
+  const ctx     = document.getElementById('h1-focus-ctx');
+  const whyEl   = document.getElementById('h1-focus-why');
+  const ctaBtn  = document.getElementById('h1-focus-cta-btn');
+  if (!title) return;
+
+  const tag     = document.getElementById('h1-signal-tag');
+  // Dynamic task (signal alert) takes priority
+  if (state.dynamicTask) {
+    const dt = state.dynamicTask;
+    if (card) card.classList.add('signal');
+    if (tag) { tag.style.display = 'inline-flex'; tag.textContent = '⚡ Timely action — just added'; }
+    if (eyebrow) eyebrow.textContent = dt.label;
+    title.textContent = dt.t;
+
+    if (dt.isShare && ctx) {
+      const s = dt.supporter;
+      const plats = s.platforms.map(p => `${p.name} · ${p.shares} shares · ${p.sigs} sigs`).join('<br>');
+      ctx.innerHTML = `
+        <div class="h1-supp-card">
+          <img class="h1-supp-photo" src="${s.photo}" alt="${s.name}">
+          <div style="flex:1;min-width:0">
+            <div class="h1-supp-name">${s.name}</div>
+            <div class="h1-supp-plat-list">${plats}</div>
+          </div>
+          <div class="h1-supp-total">${s.totalSigs} sigs</div>
+        </div>
+        <div style="font-size:.875rem;color:var(--gray-500);line-height:1.45">${dt.ctx}</div>`;
+    } else if (ctx) {
+      ctx.textContent = dt.c;
+    }
+
+    if (whyEl) {
+      if (dt.draft) {
+        whyEl.innerHTML = `${dt.why}<div class="h1-draft-lbl">Pre-drafted post</div><div class="h1-draft-post">${dt.draft.replace(/\n/g,'<br>')}</div>`;
+      } else {
+        whyEl.textContent = dt.why || 'Acting now while momentum is high will have the biggest impact.';
+      }
+    }
+    if (ctaBtn) ctaBtn.textContent = dt.cta || 'Take action now →';
+    return;
+  }
+  if (card) card.classList.remove('signal');
+  if (tag) tag.style.display = 'none';
+  if (eyebrow) eyebrow.textContent = 'Next step';
+  if (whyEl) whyEl.textContent = '';
+
+  const steps = state.petition.steps || state.path.steps || [];
+  const idx = steps.findIndex((_,i) => !state.done.includes(i));
+  if (idx === -1) {
+    if (eyebrow) eyebrow.textContent = 'All done';
+    title.textContent = 'All steps complete — great work!';
+    if (ctx)   ctx.textContent = 'Time to deliver signatures and declare your position.';
+    if (whyEl) whyEl.textContent = 'You have done everything in your plan. The next move is delivery.';
+    if (ctaBtn) ctaBtn.textContent = 'Deliver signatures →';
+    return;
+  }
+  state.focusIdx = idx;
+  const step = steps[idx];
+  if (eyebrow) eyebrow.textContent = 'Next step';
+  title.textContent  = step.t;
+  if (ctx)   ctx.textContent   = step.c;
+  if (whyEl) whyEl.textContent = step.why || 'This is the highest-leverage action you can take right now.';
+  if (ctaBtn) ctaBtn.textContent = 'Start this step →';
+}
+
+function h1ToggleDetails() {
+  const exp = document.getElementById('h1-focus-exp');
+  const btn = document.getElementById('h1-focus-toggle');
+  const open = exp.classList.toggle('open');
+  btn.textContent = open ? 'Hide details ↑' : 'See details ↓';
+}
+
+function h1FocusCTA() {
+  if (state.dynamicTask) {
+    state.dynamicTask = null;
+    renderH1FocusCard();
+    return;
+  }
+  // Mark current step done and advance
+  h1MarkDone();
+}
+
+function dismissSignal() {
+  state.dynamicTask = null;
+  renderH1FocusCard();
+  try { renderH1AllTasks(); } catch(e) {}
+}
+
+function h1MarkDone() {
+  const prevIdx = state.focusIdx;
+  if (prevIdx !== undefined && !state.done.includes(prevIdx)) {
+    state.done.push(prevIdx);
+  }
+  taskExpandedSet.delete(prevIdx);
+  renderH1FocusCard();
+  // Auto-expand the newly focused task
+  if (state.focusIdx !== prevIdx) taskExpandedSet.add(state.focusIdx);
+  try { renderH1AllTasks(); } catch(e) { console.error("renderH1AllTasks:", e); }
+}
+
+let taskExpandedSet = new Set();
+let taskExpandedForPetition = null; // tracks which petition the set belongs to
+
+function renderH1AllTasks() {
+  const p = state.petition;
+  if (!p) return;
+  const steps = p.steps || (state.path && state.path.steps) || [];
+  const remaining = steps.filter((_,i) => !state.done.includes(i)).length;
+  const countEl = document.getElementById('h1-tasks-count');
+  if (countEl) countEl.textContent = ' · ' + remaining + ' remaining';
+
+  const el = document.getElementById('h1-tasks-list');
+  if (!el) return;
+
+  // Reset expanded state whenever petition changes
+  if (taskExpandedForPetition !== p) {
+    taskExpandedSet.clear();
+    taskExpandedForPetition = p;
+  }
+
+  // Auto-expand first uncompleted task if nothing is expanded
+  const firstUncompleted = steps.findIndex((_,i) => !state.done.includes(i));
+  if (taskExpandedSet.size === 0 && firstUncompleted !== -1) {
+    taskExpandedSet.add(firstUncompleted);
+  }
+
+  el.innerHTML = '';
+
+  // If there's an active signal task, show it pinned at the top of the list
+  if (state.dynamicTask) {
+    const dt = state.dynamicTask;
+    const signalItem = document.createElement('div');
+    signalItem.className = 'h1-task-signal-item';
+    signalItem.onclick = () => {
+      // Clicking re-focuses the focus card on this signal
+      renderH1FocusCard();
+      signalItem.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    };
+    signalItem.innerHTML =
+      `<div class="h1-task-signal-item-tag">⚡ Timely action</div>` +
+      `<div class="h1-task-signal-item-title">${dt.t}</div>`;
+    el.appendChild(signalItem);
+  }
+
+  const phases = (p.roadmapPhases || p.roadmap || []);
+  let si = 0;
+  phases.forEach((ph, pi) => {
+    const g = document.createElement('div');
+    g.className = 'h1-task-group';
+    const isCur = (pi + 1) === state.phase;
+    const lbl = document.createElement('div');
+    lbl.className = 'h1-task-group-lbl' + (isCur ? ' cur' : '');
+    lbl.textContent = ph.name;
+    g.appendChild(lbl);
+    const count = ph.tasks.length;
+    for (let ti = 0; ti < count && si < steps.length; ti++, si++) {
+      const step = steps[si];
+      const idx = si;
+      const isDone = state.done.includes(idx);
+      const isActive = idx === state.focusIdx && !isDone;
+      const isOpen = taskExpandedSet.has(idx);
+
+      const item = document.createElement('div');
+      item.className = 'h1-task-item';
+
+      // Header row
+      const hdr = document.createElement('button');
+      hdr.className = 'h1-task-hdr';
+      hdr.onclick = () => h1TaskToggle(idx);
+      hdr.innerHTML =
+        `<div class="h1-task-dot${isDone?' done':isActive?' active':''}"></div>` +
+        `<div class="h1-task-name${isDone?' done':isActive?' active':''}">${step.t}</div>` +
+        `<span class="h1-task-chev${isOpen?' open':''}" id="h1-task-chev-${idx}">` +
+          `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>` +
+        `</span>`;
+
+      // Expandable body
+      const body = document.createElement('div');
+      body.className = 'h1-task-body' + (isOpen ? ' open' : '');
+      body.id = 'h1-task-body-' + idx;
+      body.innerHTML =
+        `<div class="h1-task-body-ctx">${step.c}</div>` +
+        `<div class="h1-task-body-why">` +
+          `<div class="h1-task-body-why-lbl">Why it matters</div>` +
+          `<div class="h1-task-body-why-txt">${step.why || 'This is a high-leverage action at your current stage.'}</div>` +
+        `</div>` +
+        `<button class="h1-task-body-cta${isDone?' done-cta':''}" onclick="h1TaskAction(${idx},event)">` +
+          (isDone ? '✓ Completed' : 'Start this step →') +
+        `</button>`;
+
+      item.appendChild(hdr);
+      item.appendChild(body);
+      g.appendChild(item);
+    }
+    el.appendChild(g);
+  });
+}
+
+function h1TaskToggle(idx) {
+  if (taskExpandedSet.has(idx)) {
+    taskExpandedSet.delete(idx);
+  } else {
+    taskExpandedSet.add(idx);
+    state.focusIdx = idx;
+    renderH1FocusCard();
+  }
+  const body = document.getElementById('h1-task-body-' + idx);
+  const chev = document.getElementById('h1-task-chev-' + idx);
+  if (body) body.classList.toggle('open', taskExpandedSet.has(idx));
+  if (chev) chev.classList.toggle('open', taskExpandedSet.has(idx));
+}
+
+function h1TaskAction(idx, e) {
+  if (e) e.stopPropagation();
+  if (state.done.includes(idx)) return;
+  state.done.push(idx);
+  taskExpandedSet.delete(idx);
+  // Auto-expand next uncompleted task
+  const steps = (state.petition && state.petition.steps) || (state.path && state.path.steps) || [];
+  const nextIdx = steps.findIndex((_,i) => i > idx && !state.done.includes(i));
+  if (nextIdx !== -1) {
+    taskExpandedSet.add(nextIdx);
+    state.focusIdx = nextIdx;
+  }
+  renderH1FocusCard();
+  try { renderH1AllTasks(); } catch(e) { console.error('renderH1AllTasks:', e); }
+}
+
+function h1ToggleTasks() {
+  h1AllTasksOpen = !h1AllTasksOpen;
+  document.getElementById('h1-tasks-list').classList.toggle('open', h1AllTasksOpen);
+  document.getElementById('h1-tasks-chev').classList.toggle('open', h1AllTasksOpen);
+}
+
+</script>
+
+
+
+
+<script src="/agentation-widget.js"></script>
+<script>
+/* ─── Similar Petitions sheet ─── */
+const SIMILAR_PETITIONS = {
+  'ground-up': [
+    { title:'Plant More Trees on Venice Beach Boardwalk', loc:'Venice Beach, CA', sigs:2841, path:'Build from the ground up', won:true, img:'', topic:'environment' },
+    { title:'Fix the Broken Street Lights on Oak Avenue', loc:'Austin, TX', sigs:412, path:'Build from the ground up', won:true, img:'', topic:'public safety' },
+    { title:'Save the Community Garden on 5th Street', loc:'Brooklyn, NY', sigs:1203, path:'Build from the ground up', won:true, img:'', topic:'environment' },
+  ],
+  'work-system': [
+    { title:'Add a Crosswalk at Lincoln and Pico', loc:'Santa Monica, CA', sigs:738, path:'Work the system from inside', won:true, img:'', topic:'public safety' },
+    { title:'Require Lead Testing in Compton School Water', loc:'Compton, CA', sigs:5219, path:'Work the system from inside', won:true, img:'', topic:'healthcare' },
+    { title:'Restore Bus Route 42 in East Oakland', loc:'Oakland, CA', sigs:1891, path:'Work the system from inside', won:true, img:'', topic:'transportation' },
+  ],
+  'make-news': [
+    { title:'Ban Single-Use Plastic Bags in LA County', loc:'Los Angeles, CA', sigs:28400, path:'Turn this into a story', won:true, img:'', topic:'environment' },
+    { title:'Name the New Park After Maya Angelou', loc:'Portland, OR', sigs:6120, path:'Turn this into a story', won:true, img:'', topic:'community' },
+    { title:'Stop Illegal Dumping in Watts', loc:'Watts, CA', sigs:3402, path:'Turn this into a story', won:true, img:'', topic:'environment' },
+  ],
+};
+
+function openSimilar(pathId) {
+  const sims = SIMILAR_PETITIONS[pathId] || SIMILAR_PETITIONS['ground-up'];
+  const pathObj = PATHS.find(x => x.id === pathId) || {};
+  const pathName = pathObj.name || 'this path';
+
+  const hedEl = document.getElementById('sim-hed');
+  const subEl = document.getElementById('sim-sub');
+  if (hedEl) hedEl.textContent = 'Petitions that took this path';
+  if (subEl) subEl.textContent = 'Real campaigns using \"' + pathName + '\"';
+
+  const scroll = document.getElementById('sim-scroll');
+  scroll.innerHTML = '';
+  sims.forEach(s => {
+    const topicGrad = TOPIC_IMGS[s.topic] || { bg:'linear-gradient(135deg,#e2e8f0,#cbd5e1)', emoji:'📋' };
+    const imgEl = s.img
+      ? '<img class="sim-img" src="' + s.img + '" alt="" style="width:3rem;height:3rem;border-radius:8px;object-fit:cover;flex-shrink:0;">'
+      : '<div class="sim-img" style="background:' + topicGrad.bg + ';display:flex;align-items:center;justify-content:center;font-size:1.25rem;width:3rem;height:3rem;border-radius:8px;flex-shrink:0;">' + topicGrad.emoji + '</div>';
+    const card = document.createElement('div');
+    card.className = 'sim-card';
+    card.innerHTML =
+      '<div class="sim-card-top">' +
+        imgEl +
+        '<div class="sim-info">' +
+          '<div class="sim-title">' + s.title + '</div>' +
+          '<div class="sim-meta">' + s.loc + ' · ' + fmt(s.sigs) + ' signatures</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="sim-tags">' +
+        (s.won ? '<span class="sim-tag sim-tag-victory">✓ Victory</span>' : '') +
+        '<span class="sim-tag sim-tag-path">' + s.path + '</span>' +
+      '</div>';
+    scroll.appendChild(card);
+  });
+
+  document.getElementById('similar-backdrop').style.display = 'block';
+  document.getElementById('similar-sheet').style.display = 'flex';
+}
+
+function closeSimilar() {
+  document.getElementById('similar-backdrop').style.display = 'none';
+  document.getElementById('similar-sheet').style.display = 'none';
+}
+
+</script>
+
+
+</body>
+</html>

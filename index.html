@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Change.org Co-Pilot Prototypes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Serif:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red:     #e01a2b;
+      --blue:    #0d4dfb;
+      --blue-dk: #003193;
+      --gray-50:  #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --serif: 'IBM Plex Serif', Georgia, serif;
+      --sans:  'IBM Plex Sans', system-ui, sans-serif;
+      --mono:  'IBM Plex Mono', monospace;
+    }
+    html, body {
+      min-height: 100%;
+      font-family: var(--sans);
+      background: var(--gray-50);
+      color: var(--gray-900);
+      -webkit-font-smoothing: antialiased;
+    }
+    .page {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 4rem;
+    }
+    .page-header { margin-bottom: 2.5rem; }
+    .brand { font-family: var(--serif); font-size: 1.125rem; font-weight: 700; color: var(--red); margin-bottom: 1.25rem; display: block; }
+    .page-title { font-family: var(--serif); font-size: clamp(1.75rem, 4vw, 2.375rem); font-weight: 700; line-height: 1.1; color: var(--gray-900); margin-bottom: 0.75rem; }
+    .page-dek { font-size: 0.9375rem; color: var(--gray-500); line-height: 1.6; max-width: 52ch; }
+
+    .proto-grid { display: flex; flex-direction: column; gap: 1.125rem; }
+
+    .proto-card {
+      background: #fff;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 16px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+    }
+    .proto-card:hover {
+      border-color: var(--blue);
+      box-shadow: 0 4px 24px rgba(13,77,251,0.1);
+      transform: translateY(-2px);
+    }
+
+    .proto-card-top {
+      padding: 1.375rem 1.375rem 1.125rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.875rem;
+    }
+
+    .proto-badge {
+      font-family: var(--mono); font-size: 0.5rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 0.3125rem 0.625rem; border-radius: 100px; flex-shrink: 0; margin-top: 0.1875rem;
+    }
+    .badge-red  { background: rgba(224,26,43,0.08);  color: var(--red); }
+    .badge-blue { background: rgba(13,77,251,0.08);  color: var(--blue); }
+
+    .proto-text { flex: 1; min-width: 0; }
+    .proto-title { font-family: var(--serif); font-size: 1.25rem; font-weight: 700; color: var(--gray-900); line-height: 1.2; margin-bottom: 0.3125rem; }
+    .proto-sub { font-size: 0.875rem; color: var(--gray-500); line-height: 1.5; }
+
+    .proto-features { padding: 0 1.375rem 1.125rem; display: flex; flex-direction: column; gap: 0.3125rem; }
+    .proto-feature {
+      font-size: 0.8125rem; color: var(--gray-700);
+      padding-left: 1.125rem; position: relative; line-height: 1.4;
+    }
+    .proto-feature::before { content: '→'; position: absolute; left: 0; font-size: 0.6875rem; top: 0.1em; color: var(--gray-400); }
+    .proto-card:hover .proto-feature::before { color: var(--blue); }
+
+    .proto-card-footer {
+      padding: 0.875rem 1.375rem;
+      border-top: 1px solid var(--gray-100);
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--gray-50);
+    }
+    .proto-cta { font-size: 0.875rem; font-weight: 600; color: var(--blue); }
+    .proto-tag { font-family: var(--mono); font-size: 0.5625rem; color: var(--gray-400); letter-spacing: 0.06em; }
+
+    .page-footer {
+      margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--gray-200);
+      font-size: 0.8125rem; color: var(--gray-400);
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+    }
+    .footer-mono { font-family: var(--mono); font-size: 0.5625rem; letter-spacing: 0.08em; text-transform: uppercase; }
+
+    @media (max-width: 480px) {
+      .page { padding: 2rem 1.25rem 3rem; }
+      .page-header { margin-bottom: 2rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-header">
+    <span class="brand">change.org</span>
+    <h1 class="page-title">Starter Co-Pilot<br>Prototypes</h1>
+    <p class="page-dek">Two hypotheses for an AI-powered campaign dashboard. Each explores a different model for how the co-pilot should guide petition starters.</p>
+  </div>
+
+  <div class="proto-grid">
+
+    <a class="proto-card" href="victory-paths.html">
+      <div class="proto-card-top">
+        <div class="proto-badge badge-red">Victory Paths</div>
+        <div class="proto-text">
+          <div class="proto-title">Victory Paths</div>
+          <div class="proto-sub">Choose a campaign strategy upfront. The co-pilot builds a structured, phase-based roadmap from your selection.</div>
+        </div>
+      </div>
+      <div class="proto-features">
+        <div class="proto-feature">Onboarding via 3 path cards — Quick Win, Coalition Play, Long Game</div>
+        <div class="proto-feature">Half-dial signature tracker with milestone celebrations and confetti</div>
+        <div class="proto-feature">Phase stepper (Spark → Build → Pressure → Decision) — clickable</div>
+        <div class="proto-feature">Checkable next steps + collapsible full roadmap</div>
+        <div class="proto-feature">Real-time signal alerts as dismissible banners</div>
+      </div>
+      <div class="proto-card-footer">
+        <span class="proto-cta">Open prototype →</span>
+        <span class="proto-tag">victory-paths.html</span>
+      </div>
+    </a>
+
+    <a class="proto-card" href="copilot-chat.html">
+      <div class="proto-card-top">
+        <div class="proto-badge badge-blue">Co-Pilot</div>
+        <div class="proto-text">
+          <div class="proto-title">Conversational Co-Pilot</div>
+          <div class="proto-sub">Onboarding through a 5-question chatbot. The co-pilot lives in a persistent chat and guides the campaign conversationally.</div>
+        </div>
+      </div>
+      <div class="proto-features">
+        <div class="proto-feature">5-question onboarding chatbot with typing indicators and quick replies</div>
+        <div class="proto-feature">Persistent chat fills the home screen — co-pilot responds contextually</div>
+        <div class="proto-feature">Signals surface as co-pilot chat messages with inline quick replies</div>
+        <div class="proto-feature">Full roadmap as a separate collapsible screen with expandable tasks</div>
+        <div class="proto-feature">Personalized opening plan built from onboarding answers</div>
+      </div>
+      <div class="proto-card-footer">
+        <span class="proto-cta">Open prototype →</span>
+        <span class="proto-tag">copilot-chat.html</span>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-mono">Change.org · Starter Co-Pilot · 2026</span>
+    <span>Both use the Lake Bonny petition as demo data</span>
+  </div>
+
+</div>
+</body>
+</html>
