@@ -281,7 +281,13 @@
       gap: 0.875rem;
       transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
     }
-    .path-card:hover { border-color: var(--red); box-shadow: 0 2px 14px rgba(224,26,43,0.09); }
+    .path-card:hover {
+      border: 1.5px solid transparent;
+      background:
+        linear-gradient(#fff, #fff) padding-box,
+        linear-gradient(135deg, #1d4ed8 0%, #60a5fa 100%) border-box;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.08), 0 2px 14px rgba(37,99,235,0.1);
+    }
     .path-card.selected,
     .path-card.selected:hover {
       border: 2.5px solid transparent;
