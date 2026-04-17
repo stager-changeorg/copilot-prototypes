@@ -2203,7 +2203,10 @@ function buildPathCards() {
           <div class="path-tag">${path.tag}</div>
         </div>
       </div>
-      <ol class="path-milestones">${path.bullets.map((b,i)=>'<li class="path-milestone"><span class="ms-dot">'+(i+1)+'</span><span class="ms-text">'+b+'</span></li>').join('')}</ol>
+      <div style="padding-top:.5rem">
+        <div class="eyebrow" style="margin-bottom:.5rem">Key milestones</div>
+        <ol class="path-milestones">${path.bullets.map((b,i)=>'<li class="path-milestone"><span class="ms-dot">'+(i+1)+'</span><span class="ms-text">'+b+'</span></li>').join('')}</ol>
+      </div>
       <button class="btn-choose">Choose this path</button>
       <button class="path-learn-link">Petitions that took this path →</button>
     `;
