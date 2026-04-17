@@ -1272,20 +1272,15 @@
     <span id="demo-chev">▼</span>
   </button>
   <div class="demo-inner" id="demo-inner">
-    <div class="demo-sub">Trigger Signals</div>
     <button class="demo-btn" onclick="triggerSignal(0)">📱 Facebook Momentum Alert</button>
     <button class="demo-btn" onclick="triggerSignal(1)">📰 Trending News Alert</button>
     <button class="demo-btn" onclick="triggerSignal(2)">📅 City Commission Meeting Alert</button>
-    <div class="demo-sub">Supporter Sharing</div>
     <button class="demo-btn" onclick="triggerShareActivity()">👥 Marcus W. — Top Supporter Alert</button>
-    <div class="demo-sub">Milestone Simulation</div>
     <button class="demo-btn" onclick="simulateMilestone()">🎉 Hit next signature milestone</button>
-    <div class="demo-sub">Navigation</div>
     <button class="demo-btn" onclick="dismissSignal()">↩ Back to next task</button>
     <button class="demo-btn" onclick="resetToPath()">↩ Reset — show path selection</button>
     <button class="demo-btn" onclick="fullReset()">↺ Full reset</button>
-    <div class="demo-sub">Change Petition</div>
-    <div style="display:flex;gap:.375rem;margin-bottom:.375rem">
+    <div style="display:flex;gap:.375rem;margin-bottom:.375rem;margin-top:.375rem">
       <input type="url" id="demo-url-input" placeholder="https://www.change.org/p/..." style="flex:1;padding:.4375rem .625rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:.8125rem;font-family:sans-serif;outline:none">
       <button class="demo-btn" style="flex-shrink:0;margin:0" onclick="loadFromDemoInput()">Load</button>
     </div>

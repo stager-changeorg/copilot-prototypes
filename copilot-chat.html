@@ -811,19 +811,16 @@
     <span>⚙ Demo Controls</span><span id="demo-chev">▼</span>
   </button>
   <div class="demo-inner" id="demo-inner">
-    <div class="demo-sub">Signal Updates</div>
     <button class="demo-btn" onclick="injectSignal(0)">📈 Signature milestone alert</button>
     <button class="demo-btn" onclick="injectSignal(1)">📰 Trending news alert</button>
     <button class="demo-btn" onclick="injectSignal(2)">📅 Upcoming event alert</button>
     <button class="demo-btn" onclick="injectShareActivity()">👥 Marcus W. — Top Supporter Alert</button>
     <button class="demo-btn" onclick="simulateMilestone()">🎉 Hit next signature milestone</button>
-    <div class="demo-sub">Navigation</div>
     <button class="demo-btn" onclick="resetOnboarding()">↩ Reset to home screen</button>
     <button class="demo-btn" onclick="redoOnboardingQuestions()">✏️ Redo onboarding questions</button>
     <button class="demo-btn" onclick="showRoadmap()">🗺 Jump to full roadmap</button>
     <button class="demo-btn" onclick="fullReset()">↺ Full reset</button>
-    <div class="demo-sub">Change Petition</div>
-    <div style="display:flex;gap:.375rem;margin-bottom:.375rem">
+    <div style="display:flex;gap:.375rem;margin-bottom:.375rem;margin-top:.375rem">
       <input type="url" id="demo-url-input" placeholder="https://www.change.org/p/..." style="flex:1;padding:.4375rem .625rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-size:.8125rem;font-family:sans-serif;outline:none">
       <button class="demo-btn" style="flex-shrink:0;margin:0" onclick="loadFromDemoInput()">Load</button>
     </div>
