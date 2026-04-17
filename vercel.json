@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/victory-paths", "destination": "/victory-paths.html" },
+    { "source": "/copilot-chat",  "destination": "/copilot-chat.html"  }
+  ],
+  "redirects": [
+    { "source": "/", "destination": "/victory-paths.html", "permanent": false }
+  ]
+}
