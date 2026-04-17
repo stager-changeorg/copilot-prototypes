@@ -238,7 +238,6 @@
     .path-sticky-top {
       padding: 1.75rem 1.5rem 1rem;
       background: var(--white);
-      border-bottom: 1px solid var(--gray-100);
     }
 
     .eyebrow {
@@ -283,7 +282,8 @@
       transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
     }
     .path-card:hover { border-color: var(--red); box-shadow: 0 2px 14px rgba(224,26,43,0.09); }
-    .path-card.selected {
+    .path-card.selected,
+    .path-card.selected:hover {
       border: 2.5px solid transparent;
       background:
         linear-gradient(#fff, #fff) padding-box,
@@ -1289,6 +1289,7 @@
 
     <div class="path-sticky-top">
       <h2 class="path-hed">Choose your path to victory</h2>
+      <p class="path-dek">Based on your petition and campaigns like yours that have won, here are three paths forward. Pick the one that fits your goal.</p>
     </div>
 
     <div class="path-cards" id="path-cards"></div>
