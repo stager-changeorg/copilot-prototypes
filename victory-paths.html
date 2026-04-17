@@ -637,6 +637,43 @@
     }
 
     /* ============================================
+       ACTIVITY FEED (Comments & Promotions)
+    ============================================ */
+    .activity-section { padding: 0 1.25rem 1rem; }
+    .activity-section-hed {
+      font-family: var(--mono); font-size: .5625rem; font-weight: 600;
+      color: var(--gray-400); text-transform: uppercase; letter-spacing: .1em;
+      padding: 1rem 0 .5rem;
+    }
+    .activity-item {
+      display: flex; align-items: flex-start; gap: .75rem;
+      padding: .625rem 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-av {
+      width: 2rem; height: 2rem; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .625rem; font-weight: 700; color: #fff;
+    }
+    .activity-body { flex: 1; min-width: 0; }
+    .activity-top { display: flex; align-items: center; gap: .375rem; margin-bottom: .125rem; flex-wrap: wrap; }
+    .activity-name { font-size: .8125rem; font-weight: 600; color: var(--gray-900); }
+    .activity-badge {
+      font-family: var(--mono); font-size: .5rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--gray-500); background: var(--gray-100);
+      border-radius: 4px; padding: .125rem .3125rem;
+    }
+    .activity-badge.promo { color: var(--blue); background: var(--blue-light); }
+    .activity-text { font-size: .8125rem; color: var(--gray-700); line-height: 1.4; }
+    .activity-time { font-size: .6875rem; color: var(--gray-400); margin-top: .125rem; }
+    .activity-new-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--blue); flex-shrink: 0; margin-top: .5rem;
+    }
+
+    /* ============================================
        DIVIDER
     ============================================ */
     .row-divider { height: 6px; background: var(--gray-100); }
@@ -1406,6 +1443,11 @@
       </div>
     </div>
 
+    <!-- Activity feed: comments & promotions -->
+    <div class="row-divider"></div>
+    <div class="activity-section" id="activity-section"></div>
+    <div class="row-divider"></div>
+
     <!-- Plan -->
     <div class="plan-wrap">
       <!-- Phase stepper only -->
@@ -1765,6 +1807,10 @@ const PETITIONS = [
     title: 'Keep Westside Community Hospital Open',
     topic: 'healthcare', dm: 'County Health Commission',
     loc: 'Sacramento, CA', sigs: 3892, cmt: 301, prm: 147 },
+  { match: ['breed','breeding','cruelty','puppy','mill','spay','neuter'],
+    title: 'Enforce Stricter Breeding Laws in Los Angeles',
+    topic: 'animal welfare', dm: 'Los Angeles City Council',
+    loc: 'Los Angeles, CA', sigs: 1247, cmt: 89, prm: 43 },
   { match: ['animal','pet','dog','cat','shelter','testing','labs'],
     title: 'End Animal Testing at Lakewood Research Labs',
     topic: 'animal welfare', dm: 'Lab Director & City Council',
@@ -2033,7 +2079,8 @@ function guessPetition(url) {
 
 /* ─── PETITION SLUGS (add one per research participant before each session) ─── */
 const SLUGS = {
-  'lake-bonny': 'https://www.change.org/p/petition-for-an-independent-investigation-into-the-lake-bonny-flooding-and-related-matters',
+  'lake-bonny':  'https://www.change.org/p/petition-for-an-independent-investigation-into-the-lake-bonny-flooding-and-related-matters',
+  'breeding-la': 'https://www.change.org/p/enforce-stricter-breeding-laws-in-los-angeles',
   // 'p1': 'https://www.change.org/p/...',
   // 'p2': 'https://www.change.org/p/...',
 };
@@ -2088,7 +2135,7 @@ function loadDemo() {
   const saved = loadSaved();
   if (saved) { startParsing(saved.url); return; }
   // 4. No context at all — load default petition silently
-  startParsing(SLUGS['lake-bonny']);
+  startParsing(SLUGS['breeding-la']);
 })();
 
 document.getElementById('petition-url').addEventListener('keydown', e => {
@@ -2293,6 +2340,73 @@ function renderMain() {
   renderStepper();
   renderH1FocusCard();
   try { renderH1AllTasks(); } catch(e) { console.error("renderH1AllTasks:", e); }
+  renderActivityFeed();
+}
+
+function renderActivityFeed() {
+  const el = document.getElementById('activity-section');
+  if (!el || !state.petition) return;
+  const p = state.petition;
+  const city = p.loc.split(',')[0].trim();
+
+  const AV_COLORS = ['#7c3aed','#2563eb','#059669','#d97706','#db2777','#0891b2','#b45309'];
+
+  // Generate plausible names + comments from petition topic/city
+  const topicComments = {
+    'animal welfare': [
+      `I've seen the impact of this in ${city} firsthand — shelters are overwhelmed and enforcement is nonexistent. We need this now.`,
+      `As someone who works with animals in the ${city} area, I see the fallout of unregulated practices every week. Long overdue.`,
+      `My rescue came from an overcrowded ${city} shelter. Stricter laws would have saved her and hundreds like her.`,
+    ],
+    'environment': [
+      `${city}'s green spaces are disappearing faster than anyone realizes. This petition is exactly what our community needs.`,
+      `I grew up near this area and the change has been heartbreaking. We have to act before it's too late.`,
+      `Thank you for taking action on this. ${city} residents have been waiting for someone to lead the charge.`,
+    ],
+    'housing': [
+      `My family has been directly affected by this in ${city}. We need stronger protections — now.`,
+      `Landlords in ${city} have had free reign for too long. Thank you for standing up for tenants.`,
+      `This is exactly the kind of policy change ${city} needs. Sharing with everyone I know.`,
+    ],
+  };
+  const defaultComments = [
+    `This issue directly affects ${city} residents every day. Thank you for starting this campaign.`,
+    `I've been watching this problem grow in ${city} for years. Finally someone is taking action — sharing everywhere.`,
+    `As a long-time ${city} resident, this petition means everything to me and my neighbors.`,
+  ];
+  const commentTexts = topicComments[p.topic] || defaultComments;
+
+  const comments = [
+    { initials:'MR', color:AV_COLORS[0], name:'Maya R.',    isNew:true,  text:commentTexts[0], time:'2 hours ago' },
+    { initials:'CM', color:AV_COLORS[1], name:'Carlos M.',  isNew:true,  text:commentTexts[1], time:'5 hours ago' },
+    { initials:'ST', color:AV_COLORS[2], name:'Sandra T.',  isNew:false, text:commentTexts[2], time:'1 day ago' },
+  ];
+  const promotions = [
+    { initials:'PK', color:AV_COLORS[3], name:'Priya K.',   isNew:true,  text:`Shared to 2,400 followers on Instagram Stories in the ${city} area.`, time:'3 hours ago' },
+    { initials:'TB', color:AV_COLORS[4], name:'Tom B.',     isNew:false, text:`Posted in the '${city} Community' Facebook group (28K members).`,      time:'2 days ago' },
+  ];
+
+  function itemHTML(item, type) {
+    const badge = type === 'promo'
+      ? '<span class="activity-badge promo">Promotion</span>'
+      : '<span class="activity-badge">Comment</span>';
+    const dot = item.isNew ? '<div class="activity-new-dot"></div>' : '';
+    return `<div class="activity-item">
+      <div class="activity-av" style="background:${item.color}">${item.initials}</div>
+      <div class="activity-body">
+        <div class="activity-top"><span class="activity-name">${item.name}</span>${badge}</div>
+        <div class="activity-text">${item.text}</div>
+        <div class="activity-time">${item.time}</div>
+      </div>
+      ${dot}
+    </div>`;
+  }
+
+  el.innerHTML =
+    '<div class="activity-section-hed">Comments</div>' +
+    comments.map(i => itemHTML(i, 'comment')).join('') +
+    '<div class="activity-section-hed" style="padding-top:.875rem">Promotions</div>' +
+    promotions.map(i => itemHTML(i, 'promo')).join('');
 }
 
 /* ============================================
